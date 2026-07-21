@@ -1,0 +1,101 @@
+{
+  "fonte": "Aba AGRUPAMENTO da planilha 'QUADRO DE CARGA_teste_queda de tensão_rev12.xlsx' — NBR 5410 Tabela 42 (fatores de correção aplicáveis a condutores agrupados em feixe ou em camada única)",
+  "formas": [
+    {
+      "ref": 1,
+      "descricao": "Em feixe: ao ar livre ou sobre superfície; embutidos; em conduto fechado (métodos A a F)",
+      "tabelasMetodosReferencia": "36 a 39 (métodos A a F)",
+      "fatores": [
+        { "minCircuitos": 1, "maxCircuitos": 1, "fator": 1.0 },
+        { "minCircuitos": 2, "maxCircuitos": 2, "fator": 0.8 },
+        { "minCircuitos": 3, "maxCircuitos": 3, "fator": 0.7 },
+        { "minCircuitos": 4, "maxCircuitos": 4, "fator": 0.65 },
+        { "minCircuitos": 5, "maxCircuitos": 5, "fator": 0.6 },
+        { "minCircuitos": 6, "maxCircuitos": 6, "fator": 0.57 },
+        { "minCircuitos": 7, "maxCircuitos": 7, "fator": 0.54 },
+        { "minCircuitos": 8, "maxCircuitos": 8, "fator": 0.52 },
+        { "minCircuitos": 9, "maxCircuitos": 11, "fator": 0.5 },
+        { "minCircuitos": 12, "maxCircuitos": 15, "fator": 0.45 },
+        { "minCircuitos": 16, "maxCircuitos": 19, "fator": 0.41 },
+        { "minCircuitos": 20, "maxCircuitos": null, "fator": 0.38 }
+      ]
+    },
+    {
+      "ref": 2,
+      "descricao": "Camada única sobre parede, piso, ou em bandeja não perfurada ou prateleira (método C)",
+      "tabelasMetodosReferencia": "36 a 37 (método C)",
+      "fatores": [
+        { "minCircuitos": 1, "maxCircuitos": 1, "fator": 1.0 },
+        { "minCircuitos": 2, "maxCircuitos": 2, "fator": 0.85 },
+        { "minCircuitos": 3, "maxCircuitos": 3, "fator": 0.79 },
+        { "minCircuitos": 4, "maxCircuitos": 4, "fator": 0.75 },
+        { "minCircuitos": 5, "maxCircuitos": 5, "fator": 0.73 },
+        { "minCircuitos": 6, "maxCircuitos": 6, "fator": 0.72 },
+        { "minCircuitos": 7, "maxCircuitos": 7, "fator": 0.72 },
+        { "minCircuitos": 8, "maxCircuitos": 8, "fator": 0.71 },
+        { "minCircuitos": 9, "maxCircuitos": 11, "fator": 0.7 },
+        { "minCircuitos": 12, "maxCircuitos": 15, "fator": 0.7 },
+        { "minCircuitos": 16, "maxCircuitos": 19, "fator": 0.7 },
+        { "minCircuitos": 20, "maxCircuitos": null, "fator": 0.7 }
+      ]
+    },
+    {
+      "ref": 3,
+      "descricao": "Camada única no teto (método C)",
+      "tabelasMetodosReferencia": "36 a 37 (método C)",
+      "fatores": [
+        { "minCircuitos": 1, "maxCircuitos": 1, "fator": 0.95 },
+        { "minCircuitos": 2, "maxCircuitos": 2, "fator": 0.81 },
+        { "minCircuitos": 3, "maxCircuitos": 3, "fator": 0.72 },
+        { "minCircuitos": 4, "maxCircuitos": 4, "fator": 0.68 },
+        { "minCircuitos": 5, "maxCircuitos": 5, "fator": 0.66 },
+        { "minCircuitos": 6, "maxCircuitos": 6, "fator": 0.64 },
+        { "minCircuitos": 7, "maxCircuitos": 7, "fator": 0.63 },
+        { "minCircuitos": 8, "maxCircuitos": 8, "fator": 0.62 },
+        { "minCircuitos": 9, "maxCircuitos": 11, "fator": 0.61 },
+        { "minCircuitos": 12, "maxCircuitos": 15, "fator": 0.61 },
+        { "minCircuitos": 16, "maxCircuitos": 19, "fator": 0.61 },
+        { "minCircuitos": 20, "maxCircuitos": null, "fator": 0.61 }
+      ]
+    },
+    {
+      "ref": 4,
+      "descricao": "Camada única em bandeja perfurada (métodos E e F)",
+      "tabelasMetodosReferencia": "38 e 39 (métodos E e F)",
+      "fatores": [
+        { "minCircuitos": 1, "maxCircuitos": 1, "fator": 1.0 },
+        { "minCircuitos": 2, "maxCircuitos": 2, "fator": 0.88 },
+        { "minCircuitos": 3, "maxCircuitos": 3, "fator": 0.82 },
+        { "minCircuitos": 4, "maxCircuitos": 4, "fator": 0.77 },
+        { "minCircuitos": 5, "maxCircuitos": 5, "fator": 0.75 },
+        { "minCircuitos": 6, "maxCircuitos": 6, "fator": 0.73 },
+        { "minCircuitos": 7, "maxCircuitos": 7, "fator": 0.73 },
+        { "minCircuitos": 8, "maxCircuitos": 8, "fator": 0.72 },
+        { "minCircuitos": 9, "maxCircuitos": 11, "fator": 0.72 },
+        { "minCircuitos": 12, "maxCircuitos": 15, "fator": 0.72 },
+        { "minCircuitos": 16, "maxCircuitos": 19, "fator": 0.72 },
+        { "minCircuitos": 20, "maxCircuitos": null, "fator": 0.72 }
+      ]
+    },
+    {
+      "ref": 5,
+      "descricao": "Camada única sobre leito, suporte etc. (métodos E e F)",
+      "tabelasMetodosReferencia": "38 e 39 (métodos E e F)",
+      "fatores": [
+        { "minCircuitos": 1, "maxCircuitos": 1, "fator": 1.0 },
+        { "minCircuitos": 2, "maxCircuitos": 2, "fator": 0.87 },
+        { "minCircuitos": 3, "maxCircuitos": 3, "fator": 0.82 },
+        { "minCircuitos": 4, "maxCircuitos": 4, "fator": 0.8 },
+        { "minCircuitos": 5, "maxCircuitos": 5, "fator": 0.8 },
+        { "minCircuitos": 6, "maxCircuitos": 6, "fator": 0.79 },
+        { "minCircuitos": 7, "maxCircuitos": 7, "fator": 0.79 },
+        { "minCircuitos": 8, "maxCircuitos": 8, "fator": 0.78 },
+        { "minCircuitos": 9, "maxCircuitos": 11, "fator": 0.78 },
+        { "minCircuitos": 12, "maxCircuitos": 15, "fator": 0.78 },
+        { "minCircuitos": 16, "maxCircuitos": 19, "fator": 0.78 },
+        { "minCircuitos": 20, "maxCircuitos": null, "fator": 0.78 }
+      ]
+    }
+  ],
+  "notas": "Cabecalhos de coluna '1'..'8', '9 a 11', '12 a 15', '16 a 19' e '≥ 20' convertidos em faixas minCircuitos/maxCircuitos (≥ 20 vira maxCircuitos null). A coluna O ('Tabelas dos métodos de referência') usa células mescladas na planilha: O4:O5 ('36 a 37 (método C)') vale para as formas 2 e 3, e O6:O7 ('38 e 39 (métodos E e F)') vale para as formas 4 e 5; o valor mesclado foi replicado em cada forma no campo tabelasMetodosReferencia. Campo extra tabelasMetodosReferencia adicionado além do shape solicitado por constar na tabela original."
+}

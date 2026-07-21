@@ -1,0 +1,30 @@
+{
+  "fonte": "Aba NEUTRO do Excel 'QUADRO DE CARGA_teste_queda de tensão_rev12.xlsx' (A1:B25); corresponde à NBR 5410 Tabela 48 — Seção reduzida do condutor neutro em função da seção dos condutores fase",
+  "linhas": [
+    { "faseMm2": 0.5, "neutroMm2": 0.5 },
+    { "faseMm2": 0.75, "neutroMm2": 0.75 },
+    { "faseMm2": 1, "neutroMm2": 1 },
+    { "faseMm2": 1.5, "neutroMm2": 1.5 },
+    { "faseMm2": 2.5, "neutroMm2": 2.5 },
+    { "faseMm2": 4, "neutroMm2": 4 },
+    { "faseMm2": 6, "neutroMm2": 6 },
+    { "faseMm2": 10, "neutroMm2": 10 },
+    { "faseMm2": 16, "neutroMm2": 16 },
+    { "faseMm2": 25, "neutroMm2": 25 },
+    { "faseMm2": 35, "neutroMm2": 25 },
+    { "faseMm2": 50, "neutroMm2": 25 },
+    { "faseMm2": 70, "neutroMm2": 35 },
+    { "faseMm2": 95, "neutroMm2": 50 },
+    { "faseMm2": 120, "neutroMm2": 70 },
+    { "faseMm2": 150, "neutroMm2": 70 },
+    { "faseMm2": 185, "neutroMm2": 95 },
+    { "faseMm2": 240, "neutroMm2": 120 },
+    { "faseMm2": 300, "neutroMm2": 150 },
+    { "faseMm2": 400, "neutroMm2": 185 },
+    { "faseMm2": 500, "neutroMm2": 240 },
+    { "faseMm2": 630, "neutroMm2": 300 },
+    { "faseMm2": 800, "neutroMm2": 400 },
+    { "faseMm2": 1000, "neutroMm2": 500 }
+  ],
+  "notas": "Tabela simples de duas colunas (cabecalho na linha 1, dados nas linhas 2-25), sem celulas mescladas nem ambiguidades de layout. Valores copiados exatamente do Excel; ate 25 mm2 o neutro tem a mesma secao da fase, e a partir de 35 mm2 aplica-se a reducao conforme a Tabela 48 da NBR 5410. A tabela do Excel nao reproduz as condicoes de aplicacao da norma (circuitos trifasicos, taxa de terceira harmonica < 15% etc.)."
+}

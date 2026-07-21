@@ -1,0 +1,202 @@
+{
+  "fonte": "Aba 'QUEDA DE TENSÃO' (A1:K21) da planilha QUADRO DE CARGA_teste_queda de tensão_rev12.xlsx. Nao corresponde a uma tabela numerada da NBR 5410: e uma tabela auxiliar derivada do criterio de limite de queda de tensao da NBR 5410 (item 6.2.7), calculada para condutor de cobre com condutividade 58 m/(ohm.mm2) em circuito a 2 condutores (ida e volta).",
+  "titulo": "QUEDA DE TENSÃO (Watt x Metro)",
+  "descricao": "Maximo produto potencia (W) x comprimento (m) admissivel por secao de condutor de cobre, para que a queda de tensao nao ultrapasse o percentual da coluna, nas tensoes 127 V e 220 V (circuito monofasico, 2 condutores). Formula implicita verificada: WxM = condutividade(58) * secao(mm2) * V^2 * quedaPercentual / 2.",
+  "cabecalhos": [
+    "Seção (mm²)",
+    "1% - 127V",
+    "1% - 220V",
+    "2% - 127V",
+    "2% - 220V",
+    "3% - 127V",
+    "3% - 220V",
+    "4% - 127V",
+    "4% - 220V",
+    "5% - 127V",
+    "5% - 220V"
+  ],
+  "unidade": "watt x metro (W.m)",
+  "linhas": [
+    {
+      "secaoMm2": 1.5,
+      "wattMetro": {
+        "queda1pct": { "v127": 7016, "v220": 21054 },
+        "queda2pct": { "v127": 14032, "v220": 42108 },
+        "queda3pct": { "v127": 21048, "v220": 63162 },
+        "queda4pct": { "v127": 28064, "v220": 84216 },
+        "queda5pct": { "v127": 35080, "v220": 105270 }
+      }
+    },
+    {
+      "secaoMm2": 2.5,
+      "wattMetro": {
+        "queda1pct": { "v127": 11694, "v220": 35091 },
+        "queda2pct": { "v127": 23388, "v220": 70182 },
+        "queda3pct": { "v127": 35082, "v220": 105273 },
+        "queda4pct": { "v127": 46776, "v220": 140364 },
+        "queda5pct": { "v127": 58470, "v220": 175455 }
+      }
+    },
+    {
+      "secaoMm2": 4,
+      "wattMetro": {
+        "queda1pct": { "v127": 18710, "v220": 56145 },
+        "queda2pct": { "v127": 37420, "v220": 112290 },
+        "queda3pct": { "v127": 56130, "v220": 168435 },
+        "queda4pct": { "v127": 74840, "v220": 224580 },
+        "queda5pct": { "v127": 93550, "v220": 280725 }
+      }
+    },
+    {
+      "secaoMm2": 6,
+      "wattMetro": {
+        "queda1pct": { "v127": 28065, "v220": 84218 },
+        "queda2pct": { "v127": 56130, "v220": 168436 },
+        "queda3pct": { "v127": 84195, "v220": 252654 },
+        "queda4pct": { "v127": 112260, "v220": 336872 },
+        "queda5pct": { "v127": 140325, "v220": 421090 }
+      }
+    },
+    {
+      "secaoMm2": 10,
+      "wattMetro": {
+        "queda1pct": { "v127": 46775, "v220": 140363 },
+        "queda2pct": { "v127": 93550, "v220": 280726 },
+        "queda3pct": { "v127": 140325, "v220": 421089 },
+        "queda4pct": { "v127": 187100, "v220": 561452 },
+        "queda5pct": { "v127": 233875, "v220": 701815 }
+      }
+    },
+    {
+      "secaoMm2": 16,
+      "wattMetro": {
+        "queda1pct": { "v127": 74840, "v220": 224581 },
+        "queda2pct": { "v127": 149680, "v220": 449162 },
+        "queda3pct": { "v127": 224520, "v220": 673743 },
+        "queda4pct": { "v127": 299360, "v220": 898324 },
+        "queda5pct": { "v127": 374200, "v220": 1122905 }
+      }
+    },
+    {
+      "secaoMm2": 25,
+      "wattMetro": {
+        "queda1pct": { "v127": 116938, "v220": 350908 },
+        "queda2pct": { "v127": 233876, "v220": 701816 },
+        "queda3pct": { "v127": 350814, "v220": 1052724 },
+        "queda4pct": { "v127": 467752, "v220": 1403632 },
+        "queda5pct": { "v127": 584690, "v220": 1754540 }
+      }
+    },
+    {
+      "secaoMm2": 35,
+      "wattMetro": {
+        "queda1pct": { "v127": 163713, "v220": 491271 },
+        "queda2pct": { "v127": 327426, "v220": 982542 },
+        "queda3pct": { "v127": 491139, "v220": 1473813 },
+        "queda4pct": { "v127": 654852, "v220": 1965084 },
+        "queda5pct": { "v127": 818565, "v220": 2456355 }
+      }
+    },
+    {
+      "secaoMm2": 50,
+      "wattMetro": {
+        "queda1pct": { "v127": 233876, "v220": 701815 },
+        "queda2pct": { "v127": 467752, "v220": 1403630 },
+        "queda3pct": { "v127": 701628, "v220": 2105445 },
+        "queda4pct": { "v127": 935504, "v220": 2807260 },
+        "queda5pct": { "v127": 1169380, "v220": 3509075 }
+      }
+    },
+    {
+      "secaoMm2": 70,
+      "wattMetro": {
+        "queda1pct": { "v127": 327426, "v220": 982542 },
+        "queda2pct": { "v127": 654852, "v220": 1965084 },
+        "queda3pct": { "v127": 982278, "v220": 2947626 },
+        "queda4pct": { "v127": 1309704, "v220": 3930168 },
+        "queda5pct": { "v127": 1637130, "v220": 4912710 }
+      }
+    },
+    {
+      "secaoMm2": 95,
+      "wattMetro": {
+        "queda1pct": { "v127": 444364, "v220": 1333449 },
+        "queda2pct": { "v127": 888728, "v220": 2666898 },
+        "queda3pct": { "v127": 1333092, "v220": 4000347 },
+        "queda4pct": { "v127": 1777456, "v220": 5333796 },
+        "queda5pct": { "v127": 2221820, "v220": 6667245 }
+      }
+    },
+    {
+      "secaoMm2": 120,
+      "wattMetro": {
+        "queda1pct": { "v127": 561302, "v220": 1684357 },
+        "queda2pct": { "v127": 1122604, "v220": 3368714 },
+        "queda3pct": { "v127": 1683906, "v220": 5053071 },
+        "queda4pct": { "v127": 2245208, "v220": 6737428 },
+        "queda5pct": { "v127": 2806510, "v220": 8421785 }
+      }
+    },
+    {
+      "secaoMm2": 150,
+      "wattMetro": {
+        "queda1pct": { "v127": 701627, "v220": 2105446 },
+        "queda2pct": { "v127": 1403254, "v220": 4210892 },
+        "queda3pct": { "v127": 2104881, "v220": 6316338 },
+        "queda4pct": { "v127": 2806508, "v220": 8421784 },
+        "queda5pct": { "v127": 3508135, "v220": 10527230 }
+      }
+    },
+    {
+      "secaoMm2": 185,
+      "wattMetro": {
+        "queda1pct": { "v127": 865340, "v220": 2596717 },
+        "queda2pct": { "v127": 1730680, "v220": 5193434 },
+        "queda3pct": { "v127": 2596020, "v220": 7790151 },
+        "queda4pct": { "v127": 3461360, "v220": 10386868 },
+        "queda5pct": { "v127": 4326700, "v220": 12983585 }
+      }
+    },
+    {
+      "secaoMm2": 240,
+      "wattMetro": {
+        "queda1pct": { "v127": 1122603, "v220": 3368714 },
+        "queda2pct": { "v127": 2245206, "v220": 6737428 },
+        "queda3pct": { "v127": 3367809, "v220": 10106142 },
+        "queda4pct": { "v127": 4490412, "v220": 13474856 },
+        "queda5pct": { "v127": 5613015, "v220": 16843570 }
+      }
+    },
+    {
+      "secaoMm2": 300,
+      "wattMetro": {
+        "queda1pct": { "v127": 1403254, "v220": 4210893 },
+        "queda2pct": { "v127": 2806508, "v220": 8421786 },
+        "queda3pct": { "v127": 4209762, "v220": 12632679 },
+        "queda4pct": { "v127": 5613016, "v220": 16843572 },
+        "queda5pct": { "v127": 7016270, "v220": 21054465 }
+      }
+    },
+    {
+      "secaoMm2": 400,
+      "wattMetro": {
+        "queda1pct": { "v127": 1871005, "v220": 5614400 },
+        "queda2pct": { "v127": 3742010, "v220": 11228800 },
+        "queda3pct": { "v127": 5613015, "v220": 16843200 },
+        "queda4pct": { "v127": 7484020, "v220": 22457600 },
+        "queda5pct": { "v127": 9355025, "v220": 28072000 }
+      }
+    },
+    {
+      "secaoMm2": 500,
+      "wattMetro": {
+        "queda1pct": { "v127": 2338756, "v220": 7018154 },
+        "queda2pct": { "v127": 4677512, "v220": 14036308 },
+        "queda3pct": { "v127": 7016268, "v220": 21054462 },
+        "queda4pct": { "v127": 9355024, "v220": 28072616 },
+        "queda5pct": { "v127": 11693780, "v220": 35090770 }
+      }
+    }
+  ],
+  "notas": "Layout: linha 1 = titulo 'QUEDA DE TENSÃO (Watt x Metro)'; linha 2 = percentuais de queda admissivel (0.01 a 0.05, ou seja 1% a 5%), cada um mesclado sobre um par de colunas; linha 3 = tensoes 127V/220V de cada par; coluna A = secao do condutor (1.5 a 500 mm2). No Excel, apenas as colunas de 1% (B e C) contem valores digitados; as colunas de 2% a 5% sao formulas que multiplicam a coluna de 1% por 2, 3, 4 e 5 (ex.: D4 = B4*2) — aqui foram gravados os valores calculados em cache. A tabela representa o maximo produto potencia x distancia (W.m) para circuito monofasico a 2 condutores de cobre; a fisica foi conferida: valor = 58 * secao * V^2 * queda / 2 (ex.: 1.5 mm2, 127V, 1% -> 58*1.5*127^2*0.01/2 = 7016). Verificacao por grep no dump: NENHUMA formula da aba QUADRO DE CARGA (nem de outra aba) referencia a aba 'QUEDA DE TENSÃO'. A aba principal calcula a secao por queda de tensao analiticamente na coluna BU ('Seção por queda de tensão - apoio') com a mesma fisica: =IFS(BH=1 ou 2, (100*2*AT*BG*(1/58))/(AS*BE); BH=3, (100*RAIZ(3)*AT*BG*(1/58))/(AS*BE)), e a coluna BQ arredonda para a secao comercial imediatamente superior via as abas CAP CONDUÇÃO 70º/90º. Portanto esta tabela e apenas material de referencia/consulta manual, nao um insumo de calculo da planilha."
+}

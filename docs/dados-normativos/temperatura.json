@@ -1,0 +1,38 @@
+{
+  "fonte": "Aba TEMPERATURA da planilha 'QUADRO DE CARGA_teste_queda de tensão_rev12.xlsx' — NBR 5410, Tabela 40 (fatores de correção para temperaturas ambientes diferentes de 30 °C para linhas não subterrâneas e de 20 °C para linhas subterrâneas)",
+  "ambiente": [
+    { "temperatura": 10, "pvc": 1.22, "epr": 1.15 },
+    { "temperatura": 15, "pvc": 1.17, "epr": 1.12 },
+    { "temperatura": 20, "pvc": 1.12, "epr": 1.08 },
+    { "temperatura": 25, "pvc": 1.06, "epr": 1.04 },
+    { "temperatura": 30, "pvc": 1.0, "epr": 1.0 },
+    { "temperatura": 35, "pvc": 0.94, "epr": 0.96 },
+    { "temperatura": 40, "pvc": 0.87, "epr": 0.91 },
+    { "temperatura": 45, "pvc": 0.79, "epr": 0.87 },
+    { "temperatura": 50, "pvc": 0.71, "epr": 0.82 },
+    { "temperatura": 55, "pvc": 0.61, "epr": 0.76 },
+    { "temperatura": 60, "pvc": 0.5, "epr": 0.71 },
+    { "temperatura": 65, "pvc": null, "epr": 0.65 },
+    { "temperatura": 70, "pvc": null, "epr": 0.58 },
+    { "temperatura": 75, "pvc": null, "epr": 0.5 },
+    { "temperatura": 80, "pvc": null, "epr": 0.41 }
+  ],
+  "solo": [
+    { "temperatura": 10, "pvc": 1.1, "epr": 1.07 },
+    { "temperatura": 15, "pvc": 1.05, "epr": 1.04 },
+    { "temperatura": 20, "pvc": 1.0, "epr": 1.0 },
+    { "temperatura": 25, "pvc": 0.95, "epr": 0.96 },
+    { "temperatura": 30, "pvc": 0.89, "epr": 0.93 },
+    { "temperatura": 35, "pvc": 0.84, "epr": 0.89 },
+    { "temperatura": 40, "pvc": 0.77, "epr": 0.85 },
+    { "temperatura": 45, "pvc": 0.71, "epr": 0.8 },
+    { "temperatura": 50, "pvc": 0.63, "epr": 0.76 },
+    { "temperatura": 55, "pvc": 0.55, "epr": 0.71 },
+    { "temperatura": 60, "pvc": 0.45, "epr": 0.65 },
+    { "temperatura": 65, "pvc": null, "epr": 0.6 },
+    { "temperatura": 70, "pvc": null, "epr": 0.53 },
+    { "temperatura": 75, "pvc": null, "epr": 0.46 },
+    { "temperatura": 80, "pvc": null, "epr": 0.38 }
+  ],
+  "notas": "Bloco B:D (linhas 2-16) = 'Não-subterrânea' (temperatura ambiente, referência 30 °C); bloco G:I (linhas 2-16) = 'Subterrânea' (temperatura do solo, referência 20 °C). Coluna 'EPR OU XLPE' mapeada para a chave 'epr'. Células com o texto '-' (PVC acima de 60 °C) foram convertidas para null, pois a norma não admite PVC nessas temperaturas. O rótulo do tipo de linha aparece apenas na primeira linha de cada bloco (célula mesclada) e vale para todo o bloco."
+}
