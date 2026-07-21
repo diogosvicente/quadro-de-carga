@@ -1,0 +1,17 @@
+# Build — backend
+backend/target/
+
+# Build — frontend
+frontend/node_modules/
+frontend/dist/
+
+# Ferramentas locais / sessão
+.claude/
+*.local
+
+# SO / editores
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
