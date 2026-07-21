@@ -1,0 +1,42 @@
+{
+  "fonte": "Aba DISJUNTORES (A1:D30) da planilha QUADRO DE CARGA_teste_queda de tensão_rev12.xlsx. Correntes nominais padronizadas de disjuntores termomagneticos (serie comercial usual: mini-disjuntores IEC 60898 / NBR NM 60898 ate 125 A e disjuntores em caixa moldada IEC 60947-2 acima disso). Nao corresponde a uma tabela numerada da NBR 5410; e uma tabela auxiliar de selecao do dispositivo de protecao (criterio Ib <= In da secao 5.3.4 da NBR 5410).",
+  "colunas": {
+    "A": "Tipo construtivo do disjuntor (celulas mescladas): 'MINI-DISJUNTOR' para as linhas com nominal de 6 a 125 A (A2:A14) e 'CAIXA MOLDADA' para 150 a 2000 A (A15:A30).",
+    "B": "LIM. INFERIOR - limite inferior (em A) da faixa de corrente de projeto atendida por este disjuntor; e igual a 80% do nominal da linha anterior (formula =D da linha anterior; primeira linha = 0). Usado como coluna de busca no VLOOKUP(corrente, DISJUNTORES!$B:$C, 2, 1), que assim seleciona o menor nominal cujo limite de 80% ainda comporta a corrente.",
+    "C": "NOMINAL (A) - corrente nominal padrao do disjuntor, em amperes, ordenada crescente. E a lista usada pela formula AGGREGATE(... DISJUNTORES!$C$2:$C$100 >= corrente) para achar o menor nominal >= corrente calculada.",
+    "D": "80% (A) - 80% da corrente nominal (formula =C*0.8): carga maxima recomendada de uso continuo do disjuntor; alimenta a coluna B da linha seguinte."
+  },
+  "linhas": [
+    { "a": "MINI-DISJUNTOR", "b": 0, "c": 6, "d": 4.8 },
+    { "a": "MINI-DISJUNTOR", "b": 4.8, "c": 10, "d": 8 },
+    { "a": "MINI-DISJUNTOR", "b": 8, "c": 13, "d": 10.4 },
+    { "a": "MINI-DISJUNTOR", "b": 10.4, "c": 16, "d": 12.8 },
+    { "a": "MINI-DISJUNTOR", "b": 12.8, "c": 20, "d": 16 },
+    { "a": "MINI-DISJUNTOR", "b": 16, "c": 25, "d": 20 },
+    { "a": "MINI-DISJUNTOR", "b": 20, "c": 32, "d": 25.6 },
+    { "a": "MINI-DISJUNTOR", "b": 25.6, "c": 40, "d": 32 },
+    { "a": "MINI-DISJUNTOR", "b": 32, "c": 50, "d": 40 },
+    { "a": "MINI-DISJUNTOR", "b": 40, "c": 63, "d": 50.4 },
+    { "a": "MINI-DISJUNTOR", "b": 50.4, "c": 80, "d": 64 },
+    { "a": "MINI-DISJUNTOR", "b": 64, "c": 100, "d": 80 },
+    { "a": "MINI-DISJUNTOR", "b": 80, "c": 125, "d": 100 },
+    { "a": "CAIXA MOLDADA", "b": 100, "c": 150, "d": 120 },
+    { "a": "CAIXA MOLDADA", "b": 120, "c": 175, "d": 140 },
+    { "a": "CAIXA MOLDADA", "b": 140, "c": 200, "d": 160 },
+    { "a": "CAIXA MOLDADA", "b": 160, "c": 225, "d": 180 },
+    { "a": "CAIXA MOLDADA", "b": 180, "c": 250, "d": 200 },
+    { "a": "CAIXA MOLDADA", "b": 200, "c": 300, "d": 240 },
+    { "a": "CAIXA MOLDADA", "b": 240, "c": 350, "d": 280 },
+    { "a": "CAIXA MOLDADA", "b": 280, "c": 400, "d": 320 },
+    { "a": "CAIXA MOLDADA", "b": 320, "c": 450, "d": 360 },
+    { "a": "CAIXA MOLDADA", "b": 360, "c": 500, "d": 400 },
+    { "a": "CAIXA MOLDADA", "b": 400, "c": 600, "d": 480 },
+    { "a": "CAIXA MOLDADA", "b": 480, "c": 800, "d": 640 },
+    { "a": "CAIXA MOLDADA", "b": 640, "c": 1000, "d": 800 },
+    { "a": "CAIXA MOLDADA", "b": 800, "c": 1200, "d": 960 },
+    { "a": "CAIXA MOLDADA", "b": 960, "c": 1600, "d": 1280 },
+    { "a": "CAIXA MOLDADA", "b": 1280, "c": 2000, "d": 1600 }
+  ],
+  "correntesNominaisPadrao": [6, 10, 13, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500, 600, 800, 1000, 1200, 1600, 2000],
+  "notas": "A1 esta vazia; o cabecalho da coluna A e implicito (tipo construtivo). A coluna A usa celulas mescladas (A2:A14 = MINI-DISJUNTOR, A15:A30 = CAIXA MOLDADA); o valor foi propagado para cada linha no JSON. As colunas B e D sao derivadas por formula (B_n = D_{n-1} = 0.8 * C_{n-1}); os valores foram arredondados para remover ruido de ponto flutuante do Excel (ex.: 4.800000000000001 -> 4.8). A dupla logica de selecao da planilha: AGGREGATE sobre a coluna C escolhe o menor nominal >= corrente (criterio In >= Ib), enquanto o VLOOKUP aproximado sobre B:C escolhe o menor nominal cuja capacidade continua de 80% (coluna D) ainda atende a corrente. As formulas referenciam C2:C100, mas a tabela termina na linha 30 (as linhas 31-100 sao vazias e devem ser ignoradas)."
+}

@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: eletrica-nbr5410
+  jackson:
+    deserialization:
+      # 30.7 num campo Integer (ex.: temperaturaC) deve ser 400, não truncar para 30 silenciosamente
+      accept-float-as-int: false
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/eletrica}
+    username: ${SPRING_DATASOURCE_USERNAME:eletrica}
+    password: ${SPRING_DATASOURCE_PASSWORD:eletrica}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
