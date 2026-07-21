@@ -357,7 +357,7 @@ cd frontend && npm install && npm run dev      # proxy /api → localhost:8086
 docker run --rm -v $PWD/backend:/app -w /app maven:3-eclipse-temurin-21 mvn test
 ```
 
-Variáveis (ver `compose.yml`): `SPRING_DATASOURCE_URL/USERNAME/PASSWORD`. Flyway roda na subida.
+Variáveis (ver `docker-compose.yml`): `SPRING_DATASOURCE_URL/USERNAME/PASSWORD`. Flyway roda na subida.
 
 ---
 
