@@ -1,12 +1,25 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import {
+  Alert,
+  Button,
+  Card,
+  Group,
+  NumberInput,
+  Select,
+  SimpleGrid,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { IconAlertTriangle } from '@tabler/icons-react';
 import { ApiError } from '../api/client';
 import { atualizarQuadro, criarQuadro } from '../api/quadros';
 import type { MetodoInstalacao, SistemaTensao } from '../types/comum';
 import type { QuadroRequest, QuadroResponse } from '../types/quadro';
 import type { ReferenciasResponse } from '../types/referencias';
-import { Alerta } from './Alerta';
-import { Campo } from './Campo';
 
 interface FormQuadro {
   nome: string;
@@ -60,13 +73,23 @@ interface QuadroFormProps {
   referencias: ReferenciasResponse;
   aoSalvar: (quadro: QuadroResponse) => void;
   aoCancelar: () => void;
+  /**
+   * 'simples' mostra só identidade (nome/local) — os parâmetros do alimentador
+   * ficam com valores padrão e são ajustados depois na tela do Quadro Elétrico.
+   * 'completo' mostra tudo (usado ao ajustar o alimentador no Quadro Elétrico).
+   */
+  variante?: 'completo' | 'simples';
 }
 
 /** Formulário de quadro (alimentador geral) — criação e edição. */
-export function QuadroForm({ inicial, referencias, aoSalvar, aoCancelar }: QuadroFormProps) {
-  const [form, setForm] = useState<FormQuadro>(() =>
-    inicial ? deResposta(inicial) : FORM_PADRAO,
-  );
+export function QuadroForm({
+  inicial,
+  referencias,
+  aoSalvar,
+  aoCancelar,
+  variante = 'completo',
+}: QuadroFormProps) {
+  const [form, setForm] = useState<FormQuadro>(() => (inicial ? deResposta(inicial) : FORM_PADRAO));
   const [erros, setErros] = useState<Record<string, string>>({});
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -129,6 +152,10 @@ export function QuadroForm({ inicial, referencias, aoSalvar, aoCancelar }: Quadr
     const chamada = inicial ? atualizarQuadro(inicial.id, corpo) : criarQuadro(corpo);
     chamada
       .then((quadro) => {
+        notifications.show({
+          message: inicial ? 'Quadro atualizado.' : 'Quadro criado.',
+          color: 'teal',
+        });
         aoSalvar(quadro);
       })
       .catch((erro: unknown) => {
@@ -143,136 +170,135 @@ export function QuadroForm({ inicial, referencias, aoSalvar, aoCancelar }: Quadr
       });
   };
 
+  const sistemas = referencias.sistemasTensao.map((s) => ({ value: s.codigo, label: s.rotulo }));
+  const fases = referencias.fases.map((f) => ({ value: String(f.valor), label: f.rotulo }));
+  const metodos = referencias.metodosInstalacao.map((m) => ({
+    value: m.codigo,
+    label: `${m.codigo} — ${m.descricao}`,
+  }));
+
   return (
-    <section className="cartao">
-      <h2>{inicial ? 'Editar Quadro' : 'Novo Quadro'}</h2>
-      {mensagem ? <Alerta>{mensagem}</Alerta> : null}
+    <Card component="section">
+      <Title order={2} fz="h4" mb="md">
+        {inicial ? 'Editar Quadro' : 'Novo Quadro'}
+      </Title>
+      {mensagem ? (
+        <Alert color="red" icon={<IconAlertTriangle size={16} />} mb="md">
+          {mensagem}
+        </Alert>
+      ) : null}
       <form onSubmit={enviar} noValidate>
-        <div className="form-grade">
-          <Campo id="nome" rotulo="Nome do Quadro *" erro={erros.nome} cheio>
-            <input
-              id="nome"
-              type="text"
-              value={form.nome}
-              onChange={(e) => alterar('nome', e.target.value)}
-              placeholder="Ex: QDC Bloco D"
-              maxLength={120}
-            />
-          </Campo>
-          <Campo id="local" rotulo="Local" erro={erros.local} cheio>
-            <input
-              id="local"
-              type="text"
-              value={form.local}
-              onChange={(e) => alterar('local', e.target.value)}
-              placeholder="Ex: Dept. Engenharia Elétrica"
-              maxLength={120}
-            />
-          </Campo>
-          <Campo id="sistemaTensao" rotulo="Sistema de Tensão" erro={erros.sistemaTensao}>
-            <select
-              id="sistemaTensao"
-              value={form.sistemaTensao}
-              onChange={(e) => alterar('sistemaTensao', e.target.value as SistemaTensao)}
-            >
-              {referencias.sistemasTensao.map((s) => (
-                <option key={s.codigo} value={s.codigo}>
-                  {s.rotulo}
-                </option>
-              ))}
-            </select>
-          </Campo>
-          <Campo id="fasesAlimentador" rotulo="Fases do Alimentador" erro={erros.fasesAlimentador}>
-            <select
-              id="fasesAlimentador"
-              value={form.fasesAlimentador}
-              onChange={(e) => alterar('fasesAlimentador', e.target.value)}
-            >
-              {referencias.fases.map((f) => (
-                <option key={f.valor} value={String(f.valor)}>
-                  {f.rotulo}
-                </option>
-              ))}
-            </select>
-          </Campo>
-          <Campo id="fatorDemanda" rotulo="Fator de Demanda" erro={erros.fatorDemanda}>
-            <input
-              id="fatorDemanda"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0.01"
-              max="1"
-              value={form.fatorDemanda}
-              onChange={(e) => alterar('fatorDemanda', e.target.value)}
-            />
-          </Campo>
-          <Campo id="cargaReservaVA" rotulo="Carga de Reserva (VA)" erro={erros.cargaReservaVA}>
-            <input
-              id="cargaReservaVA"
-              type="number"
-              inputMode="decimal"
-              step="1"
-              min="0"
-              value={form.cargaReservaVA}
-              onChange={(e) => alterar('cargaReservaVA', e.target.value)}
-            />
-          </Campo>
-          <Campo id="comprimentoM" rotulo="Comprimento do Alimentador (m)" erro={erros.comprimentoM}>
-            <input
-              id="comprimentoM"
-              type="number"
-              inputMode="decimal"
-              step="0.1"
-              min="0.1"
-              value={form.comprimentoM}
-              onChange={(e) => alterar('comprimentoM', e.target.value)}
-            />
-          </Campo>
-          <Campo id="metodoInstalacao" rotulo="Método de Instalação" erro={erros.metodoInstalacao}>
-            <select
-              id="metodoInstalacao"
-              value={form.metodoInstalacao}
-              onChange={(e) => alterar('metodoInstalacao', e.target.value as MetodoInstalacao)}
-            >
-              {referencias.metodosInstalacao.map((m) => (
-                <option key={m.codigo} value={m.codigo}>
-                  {m.codigo} — {m.descricao}
-                </option>
-              ))}
-            </select>
-          </Campo>
-          <Campo id="quedaAdmissivelPct" rotulo="Queda Admissível (%)" erro={erros.quedaAdmissivelPct}>
-            <input
-              id="quedaAdmissivelPct"
-              type="number"
-              inputMode="decimal"
-              step="0.1"
-              min="0.1"
-              value={form.quedaAdmissivelPct}
-              onChange={(e) => alterar('quedaAdmissivelPct', e.target.value)}
-            />
-          </Campo>
-          <Campo id="temperaturaC" rotulo="Temperatura Ambiente (°C)" erro={erros.temperaturaC}>
-            <input
-              id="temperaturaC"
-              type="number"
-              inputMode="decimal"
-              step="1"
-              value={form.temperaturaC}
-              onChange={(e) => alterar('temperaturaC', e.target.value)}
-            />
-          </Campo>
-        </div>
-        <div className="form-acoes">
-          <button type="button" className="botao-sec" onClick={aoCancelar} disabled={salvando}>
+        <Stack gap="md">
+          <TextInput
+            label="Nome do Quadro"
+            required
+            value={form.nome}
+            error={erros.nome}
+            placeholder="Ex: QDC Bloco D"
+            maxLength={120}
+            onChange={(e) => alterar('nome', e.currentTarget.value)}
+          />
+          <TextInput
+            label="Local"
+            value={form.local}
+            error={erros.local}
+            placeholder="Ex: Dept. Engenharia Elétrica"
+            maxLength={120}
+            onChange={(e) => alterar('local', e.currentTarget.value)}
+          />
+          {variante === 'completo' ? (
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+              <Select
+                label="Sistema de Tensão"
+                data={sistemas}
+                value={form.sistemaTensao}
+                error={erros.sistemaTensao}
+                allowDeselect={false}
+                onChange={(v) => {
+                  if (v) alterar('sistemaTensao', v as SistemaTensao);
+                }}
+              />
+              <Select
+                label="Fases do Alimentador"
+                data={fases}
+                value={form.fasesAlimentador}
+                error={erros.fasesAlimentador}
+                allowDeselect={false}
+                onChange={(v) => {
+                  if (v) alterar('fasesAlimentador', v);
+                }}
+              />
+              <NumberInput
+                label="Fator de Demanda"
+                value={form.fatorDemanda}
+                error={erros.fatorDemanda}
+                step={0.01}
+                allowNegative={false}
+                onChange={(v) => alterar('fatorDemanda', String(v))}
+              />
+              <NumberInput
+                label="Carga de Reserva (VA)"
+                value={form.cargaReservaVA}
+                error={erros.cargaReservaVA}
+                suffix=" VA"
+                step={1}
+                allowNegative={false}
+                onChange={(v) => alterar('cargaReservaVA', String(v))}
+              />
+              <NumberInput
+                label="Comprimento do Alimentador (m)"
+                value={form.comprimentoM}
+                error={erros.comprimentoM}
+                suffix=" m"
+                step={0.1}
+                allowNegative={false}
+                onChange={(v) => alterar('comprimentoM', String(v))}
+              />
+              <Select
+                label="Método de Instalação"
+                data={metodos}
+                value={form.metodoInstalacao}
+                error={erros.metodoInstalacao}
+                allowDeselect={false}
+                onChange={(v) => {
+                  if (v) alterar('metodoInstalacao', v as MetodoInstalacao);
+                }}
+              />
+              <NumberInput
+                label="Queda Admissível (%)"
+                value={form.quedaAdmissivelPct}
+                error={erros.quedaAdmissivelPct}
+                suffix=" %"
+                step={0.1}
+                allowNegative={false}
+                onChange={(v) => alterar('quedaAdmissivelPct', String(v))}
+              />
+              <NumberInput
+                label="Temperatura Ambiente (°C)"
+                value={form.temperaturaC}
+                error={erros.temperaturaC}
+                suffix=" °C"
+                step={1}
+                onChange={(v) => alterar('temperaturaC', String(v))}
+              />
+            </SimpleGrid>
+          ) : null}
+          {variante === 'simples' ? (
+            <Text size="sm" c="dimmed">
+              Os parâmetros do alimentador (tensão, comprimento, método, temperatura…) você ajusta
+              depois na tela do <strong>Quadro Elétrico</strong>.
+            </Text>
+          ) : null}
+        </Stack>
+        <Group justify="flex-end" mt="lg">
+          <Button variant="default" onClick={aoCancelar} disabled={salvando}>
             Cancelar
-          </button>
-          <button type="submit" className="botao" disabled={salvando}>
-            {salvando ? 'Salvando…' : inicial ? 'Salvar Alterações' : 'Criar Quadro'}
-          </button>
-        </div>
+          </Button>
+          <Button type="submit" loading={salvando}>
+            {inicial ? 'Salvar Alterações' : 'Criar Quadro'}
+          </Button>
+        </Group>
       </form>
-    </section>
+    </Card>
   );
 }

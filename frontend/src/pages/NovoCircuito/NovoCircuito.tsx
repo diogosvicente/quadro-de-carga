@@ -1,6 +1,25 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import {
+  Accordion,
+  Alert,
+  Button,
+  Center,
+  Fieldset,
+  Group,
+  Loader,
+  NumberInput,
+  Select,
+  SimpleGrid,
+  Stack,
+  Switch,
+  Text,
+  TextInput,
+  Title,
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { IconAlertTriangle } from '@tabler/icons-react';
 import { ApiError } from '../../api/client';
 import {
   atualizarCircuito,
@@ -9,9 +28,6 @@ import {
   criarCircuito,
 } from '../../api/circuitos';
 import { obterReferencias } from '../../api/referencias';
-import { Alerta } from '../../components/Alerta';
-import { Campo } from '../../components/Campo';
-import { Carregando } from '../../components/Carregando';
 import { ResultadoDimensionamento } from '../../components/ResultadoDimensionamento';
 import type { CircuitoRequest, CircuitoResponse, ResultadoCircuito } from '../../types/circuito';
 import type { Isolante, MetodoInstalacao, TipoCircuito } from '../../types/comum';
@@ -57,6 +73,15 @@ const FORM_PADRAO: FormCircuito = {
   linhaSubterranea: false,
 };
 
+const CAMPOS_AVANCADOS = [
+  'metodoInstalacao',
+  'isolante',
+  'formaAgrupamentoRef',
+  'fatorDemanda',
+  'quedaAdmissivelPct',
+  'linhaSubterranea',
+];
+
 function deResposta(c: CircuitoResponse): FormCircuito {
   return {
     numero: String(c.numero),
@@ -98,6 +123,7 @@ export function NovoCircuito() {
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [previa, setPrevia] = useState<ResultadoCircuito | null>(null);
   const [ocupado, setOcupado] = useState<'previa' | 'salvar' | null>(null);
+  const [avancadoAberto, setAvancadoAberto] = useState<string | null>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -228,7 +254,13 @@ export function NovoCircuito() {
         ? atualizarCircuito(quadroId, circuitoId, corpo)
         : criarCircuito(quadroId, corpo);
     chamada
-      .then((circuito) => navigate(`/quadros/${quadroId}/circuitos/${circuito.id}`))
+      .then((circuito) => {
+        notifications.show({
+          message: circuitoId !== null ? 'Circuito atualizado.' : 'Circuito cadastrado.',
+          color: 'teal',
+        });
+        navigate(`/quadros/${quadroId}/circuitos/${circuito.id}`);
+      })
       .catch((e: unknown) => {
         tratarErro(e);
         setOcupado(null);
@@ -236,286 +268,261 @@ export function NovoCircuito() {
   };
 
   if (carregando) {
-    return <Carregando texto="Carregando formulário…" />;
+    return (
+      <Center py="xl">
+        <Loader />
+      </Center>
+    );
   }
   if (erroCarga !== null || referencias === null) {
-    return <Alerta>{erroCarga ?? 'Falha ao carregar o formulário.'}</Alerta>;
+    return (
+      <Alert color="red" icon={<IconAlertTriangle size={16} />} title="Erro" mt="lg">
+        {erroCarga ?? 'Falha ao carregar o formulário.'}
+      </Alert>
+    );
   }
 
-  return (
-    <>
-      <header className="pagina-cabeca">
-        <div>
-          <h1>{editando ? `Editar Circuito ${form.numero}` : 'Novo Circuito'}</h1>
-          <p className="texto-mudo">
-            Preencha os dados para dimensionamento conforme NBR 5410
-          </p>
-        </div>
-      </header>
+  const tipos = referencias.tiposCircuito.map((t) => ({
+    value: t.codigo,
+    label: `${t.rotulo} (seção mín. ${num(t.secaoMinimaMm2)} mm²)`,
+  }));
+  const tensoes = referencias.tensoes.map((t) => ({ value: String(t), label: `${t} V` }));
+  const fases = referencias.fases.map((f) => ({ value: String(f.valor), label: f.rotulo }));
+  const metodos = referencias.metodosInstalacao.map((m) => ({
+    value: m.codigo,
+    label: `${m.codigo} — ${m.descricao}`,
+  }));
+  const isolantes = referencias.isolantes.map((i) => ({ value: i.codigo, label: i.rotulo }));
+  const formas = referencias.formasAgrupamento.map((f) => ({
+    value: String(f.ref),
+    label: `${f.ref} — ${f.descricao}`,
+  }));
 
-      {mensagem ? <Alerta>{mensagem}</Alerta> : null}
+  const temErroAvancado = CAMPOS_AVANCADOS.some((campo) => campo in erros);
+
+  return (
+    <Stack gap="md">
+      <div style={{ marginTop: 'var(--mantine-spacing-lg)' }}>
+        <Title order={1} fz={{ base: 'h2', sm: 'h1' }}>
+          {editando ? `Editar Circuito ${form.numero}` : 'Novo Circuito'}
+        </Title>
+        <Text c="dimmed" size="sm" mt={4}>
+          Preencha os dados para dimensionamento conforme NBR 5410
+        </Text>
+      </div>
+
+      {mensagem ? (
+        <Alert color="red" icon={<IconAlertTriangle size={16} />} title="Erro">
+          {mensagem}
+        </Alert>
+      ) : null}
 
       <form onSubmit={salvar} noValidate>
-        <fieldset className="cartao">
-          <legend>Identificação</legend>
-          <div className="form-grade">
-            <Campo id="numero" rotulo="Número do Circuito *" erro={erros.numero}>
-              <input
-                id="numero"
-                type="number"
-                inputMode="numeric"
-                step="1"
-                min="1"
-                placeholder="Ex: 1"
-                value={form.numero}
-                onChange={(e) => alterar('numero', e.target.value)}
-              />
-            </Campo>
-            <Campo id="descricao" rotulo="Descrição" erro={erros.descricao}>
-              <input
-                id="descricao"
-                type="text"
-                placeholder="Ex: Iluminação Sala"
-                maxLength={120}
-                value={form.descricao}
-                onChange={(e) => alterar('descricao', e.target.value)}
-              />
-            </Campo>
-            <Campo id="tipo" rotulo="Tipo de Circuito *" erro={erros.tipo} cheio>
-              <select
-                id="tipo"
+        <Stack gap="md">
+          <Fieldset legend="Identificação" radius="md">
+            <Stack gap="md">
+              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                <NumberInput
+                  label="Número do Circuito"
+                  required
+                  value={form.numero}
+                  error={erros.numero}
+                  placeholder="Ex: 1"
+                  allowDecimal={false}
+                  allowNegative={false}
+                  onChange={(v) => alterar('numero', String(v))}
+                />
+                <TextInput
+                  label="Descrição"
+                  value={form.descricao}
+                  error={erros.descricao}
+                  placeholder="Ex: Iluminação Sala"
+                  maxLength={120}
+                  onChange={(e) => alterar('descricao', e.currentTarget.value)}
+                />
+              </SimpleGrid>
+              <Select
+                label="Tipo de Circuito"
+                required
+                data={tipos}
                 value={form.tipo}
-                onChange={(e) => alterar('tipo', e.target.value as TipoCircuito)}
-              >
-                {referencias.tiposCircuito.map((t) => (
-                  <option key={t.codigo} value={t.codigo}>
-                    {t.rotulo} (seção mín. {num(t.secaoMinimaMm2)} mm²)
-                  </option>
-                ))}
-              </select>
-            </Campo>
-          </div>
-        </fieldset>
+                error={erros.tipo}
+                allowDeselect={false}
+                onChange={(v) => {
+                  if (v) alterar('tipo', v as TipoCircuito);
+                }}
+              />
+            </Stack>
+          </Fieldset>
 
-        <fieldset className="cartao">
-          <legend>Dados Elétricos</legend>
-          <div className="form-grade">
-            <Campo id="tensaoV" rotulo="Tensão (V) *" erro={erros.tensaoV}>
-              <select
-                id="tensaoV"
+          <Fieldset legend="Dados Elétricos" radius="md">
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+              <Select
+                label="Tensão (V)"
+                required
+                data={tensoes}
                 value={form.tensaoV}
-                onChange={(e) => alterar('tensaoV', e.target.value)}
-              >
-                {referencias.tensoes.map((t) => (
-                  <option key={t} value={String(t)}>
-                    {t} V
-                  </option>
-                ))}
-              </select>
-            </Campo>
-            <Campo id="fases" rotulo="Fases *" erro={erros.fases}>
-              <select
-                id="fases"
+                error={erros.tensaoV}
+                allowDeselect={false}
+                onChange={(v) => {
+                  if (v) alterar('tensaoV', v);
+                }}
+              />
+              <Select
+                label="Fases"
+                required
+                data={fases}
                 value={form.fases}
-                onChange={(e) => alterar('fases', e.target.value)}
-              >
-                {referencias.fases.map((f) => (
-                  <option key={f.valor} value={String(f.valor)}>
-                    {f.rotulo}
-                  </option>
-                ))}
-              </select>
-            </Campo>
-            <Campo id="potenciaW" rotulo="Potência Total (W) *" erro={erros.potenciaW}>
-              <input
-                id="potenciaW"
-                type="number"
-                inputMode="decimal"
-                step="1"
-                min="1"
-                placeholder="Ex: 1200"
+                error={erros.fases}
+                allowDeselect={false}
+                onChange={(v) => {
+                  if (v) alterar('fases', v);
+                }}
+              />
+              <NumberInput
+                label="Potência Total (W)"
+                required
                 value={form.potenciaW}
-                onChange={(e) => alterar('potenciaW', e.target.value)}
+                error={erros.potenciaW}
+                placeholder="Ex: 1200"
+                suffix=" W"
+                step={1}
+                allowNegative={false}
+                onChange={(v) => alterar('potenciaW', String(v))}
               />
-            </Campo>
-            <Campo id="fatorPotencia" rotulo="Fator de Potência" erro={erros.fatorPotencia}>
-              <input
-                id="fatorPotencia"
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                min="0.01"
-                max="1"
+              <NumberInput
+                label="Fator de Potência"
                 value={form.fatorPotencia}
-                onChange={(e) => alterar('fatorPotencia', e.target.value)}
+                error={erros.fatorPotencia}
+                step={0.01}
+                allowNegative={false}
+                onChange={(v) => alterar('fatorPotencia', String(v))}
               />
-            </Campo>
-            <Campo id="comprimentoM" rotulo="Comprimento do Fio (m) *" erro={erros.comprimentoM}>
-              <input
-                id="comprimentoM"
-                type="number"
-                inputMode="decimal"
-                step="0.1"
-                min="0.1"
-                placeholder="Ex: 30"
+              <NumberInput
+                label="Comprimento do Fio (m)"
+                required
                 value={form.comprimentoM}
-                onChange={(e) => alterar('comprimentoM', e.target.value)}
+                error={erros.comprimentoM}
+                placeholder="Ex: 30"
+                suffix=" m"
+                step={0.1}
+                allowNegative={false}
+                onChange={(v) => alterar('comprimentoM', String(v))}
               />
-            </Campo>
-          </div>
-        </fieldset>
+            </SimpleGrid>
+          </Fieldset>
 
-        <fieldset className="cartao">
-          <legend>Condições de Instalação</legend>
-          <div className="form-grade">
-            <Campo id="circuitosAgrupados" rotulo="Circuitos Agrupados" erro={erros.circuitosAgrupados}>
-              <input
-                id="circuitosAgrupados"
-                type="number"
-                inputMode="numeric"
-                step="1"
-                min="1"
+          <Fieldset legend="Condições de Instalação" radius="md">
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+              <NumberInput
+                label="Circuitos Agrupados"
                 value={form.circuitosAgrupados}
-                onChange={(e) => alterar('circuitosAgrupados', e.target.value)}
+                error={erros.circuitosAgrupados}
+                allowDecimal={false}
+                allowNegative={false}
+                onChange={(v) => alterar('circuitosAgrupados', String(v))}
               />
-            </Campo>
-            <Campo id="temperaturaC" rotulo="Temperatura Ambiente (°C)" erro={erros.temperaturaC}>
-              <input
-                id="temperaturaC"
-                type="number"
-                inputMode="decimal"
-                step="1"
+              <NumberInput
+                label="Temperatura Ambiente (°C)"
                 value={form.temperaturaC}
-                onChange={(e) => alterar('temperaturaC', e.target.value)}
+                error={erros.temperaturaC}
+                suffix=" °C"
+                step={1}
+                onChange={(v) => alterar('temperaturaC', String(v))}
               />
-            </Campo>
-          </div>
-        </fieldset>
+            </SimpleGrid>
+          </Fieldset>
 
-        <details
-          className="cartao avancado"
-          open={
-            ['metodoInstalacao', 'isolante', 'formaAgrupamentoRef', 'fatorDemanda', 'quedaAdmissivelPct', 'linhaSubterranea']
-              .some((campo) => campo in erros) || undefined
-          }
-        >
-          <summary>Condições Avançadas</summary>
-          <div className="avancado-corpo">
-            <div className="form-grade">
-              <Campo id="metodoInstalacao" rotulo="Método de Instalação" erro={erros.metodoInstalacao}>
-                <select
-                  id="metodoInstalacao"
-                  value={form.metodoInstalacao}
-                  onChange={(e) => alterar('metodoInstalacao', e.target.value as MetodoInstalacao)}
-                >
-                  {referencias.metodosInstalacao.map((m) => (
-                    <option key={m.codigo} value={m.codigo}>
-                      {m.codigo} — {m.descricao}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
-              <Campo id="isolante" rotulo="Isolante" erro={erros.isolante}>
-                <select
-                  id="isolante"
-                  value={form.isolante}
-                  onChange={(e) => alterar('isolante', e.target.value as Isolante)}
-                >
-                  {referencias.isolantes.map((i) => (
-                    <option key={i.codigo} value={i.codigo}>
-                      {i.rotulo}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
-              <Campo
-                id="formaAgrupamentoRef"
-                rotulo="Forma de Agrupamento"
-                erro={erros.formaAgrupamentoRef}
-                cheio
-              >
-                <select
-                  id="formaAgrupamentoRef"
-                  value={form.formaAgrupamentoRef}
-                  onChange={(e) => alterar('formaAgrupamentoRef', e.target.value)}
-                >
-                  {referencias.formasAgrupamento.map((f) => (
-                    <option key={f.ref} value={String(f.ref)}>
-                      {f.ref} — {f.descricao}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
-              <Campo id="fatorDemanda" rotulo="Fator de Demanda" erro={erros.fatorDemanda}>
-                <input
-                  id="fatorDemanda"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.01"
-                  min="0.01"
-                  max="1"
-                  value={form.fatorDemanda}
-                  onChange={(e) => alterar('fatorDemanda', e.target.value)}
-                />
-              </Campo>
-              <Campo id="quedaAdmissivelPct" rotulo="Queda Admissível (%)" erro={erros.quedaAdmissivelPct}>
-                <input
-                  id="quedaAdmissivelPct"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  min="0.1"
-                  value={form.quedaAdmissivelPct}
-                  onChange={(e) => alterar('quedaAdmissivelPct', e.target.value)}
-                />
-              </Campo>
-              <div className="campo campo-check">
-                <label htmlFor="linhaSubterranea">
-                  <input
-                    id="linhaSubterranea"
-                    type="checkbox"
-                    checked={form.linhaSubterranea}
-                    onChange={(e) => alterar('linhaSubterranea', e.target.checked)}
-                  />
-                  Linha subterrânea
-                </label>
-                {erros.linhaSubterranea ? (
-                  <p className="campo-msg" role="alert">
-                    {erros.linhaSubterranea}
-                  </p>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <div className="form-acoes">
-          <button
-            type="button"
-            className="botao-sec"
-            onClick={calcularPrevia}
-            disabled={ocupado !== null}
+          <Accordion
+            variant="separated"
+            value={temErroAvancado ? 'avancado' : avancadoAberto}
+            onChange={setAvancadoAberto}
           >
-            {ocupado === 'previa' ? 'Calculando…' : 'Calcular Prévia'}
-          </button>
-          <button type="submit" className="botao" disabled={ocupado !== null}>
-            {ocupado === 'salvar'
-              ? 'Salvando…'
-              : editando
-                ? 'Salvar Alterações'
-                : 'Cadastrar Circuito'}
-          </button>
-        </div>
+            <Accordion.Item value="avancado">
+              <Accordion.Control>Condições Avançadas</Accordion.Control>
+              <Accordion.Panel>
+                <Stack gap="md">
+                  <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                    <Select
+                      label="Método de Instalação"
+                      data={metodos}
+                      value={form.metodoInstalacao}
+                      error={erros.metodoInstalacao}
+                      allowDeselect={false}
+                      onChange={(v) => {
+                        if (v) alterar('metodoInstalacao', v as MetodoInstalacao);
+                      }}
+                    />
+                    <Select
+                      label="Isolante"
+                      data={isolantes}
+                      value={form.isolante}
+                      error={erros.isolante}
+                      allowDeselect={false}
+                      onChange={(v) => {
+                        if (v) alterar('isolante', v as Isolante);
+                      }}
+                    />
+                  </SimpleGrid>
+                  <Select
+                    label="Forma de Agrupamento"
+                    data={formas}
+                    value={form.formaAgrupamentoRef}
+                    error={erros.formaAgrupamentoRef}
+                    allowDeselect={false}
+                    onChange={(v) => {
+                      if (v) alterar('formaAgrupamentoRef', v);
+                    }}
+                  />
+                  <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                    <NumberInput
+                      label="Fator de Demanda"
+                      value={form.fatorDemanda}
+                      error={erros.fatorDemanda}
+                      step={0.01}
+                      allowNegative={false}
+                      onChange={(v) => alterar('fatorDemanda', String(v))}
+                    />
+                    <NumberInput
+                      label="Queda Admissível (%)"
+                      value={form.quedaAdmissivelPct}
+                      error={erros.quedaAdmissivelPct}
+                      suffix=" %"
+                      step={0.1}
+                      allowNegative={false}
+                      onChange={(v) => alterar('quedaAdmissivelPct', String(v))}
+                    />
+                  </SimpleGrid>
+                  <Switch
+                    label="Linha subterrânea"
+                    checked={form.linhaSubterranea}
+                    error={erros.linhaSubterranea}
+                    onChange={(e) => alterar('linhaSubterranea', e.currentTarget.checked)}
+                  />
+                </Stack>
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
+
+          <Group gap="sm" grow>
+            <Button variant="default" onClick={calcularPrevia} loading={ocupado === 'previa'}>
+              Calcular Prévia
+            </Button>
+            <Button type="submit" loading={ocupado === 'salvar'}>
+              {editando ? 'Salvar Alterações' : 'Cadastrar Circuito'}
+            </Button>
+          </Group>
+        </Stack>
       </form>
 
       {previa ? (
-        <section className="previa" aria-live="polite">
+        <div aria-live="polite">
           <ResultadoDimensionamento
             resultado={previa}
             titulo="Prévia do Dimensionamento (não salva)"
           />
-        </section>
+        </div>
       ) : null}
-    </>
+    </Stack>
   );
 }

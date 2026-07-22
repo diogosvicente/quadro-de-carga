@@ -1,0 +1,28 @@
+/* ==========================================================================
+   Globais mínimos — o grosso do estilo vem do tema Mantine (src/theme.ts).
+   Aqui só o que não há prop/token do Mantine para resolver.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+}
+
+/* Algarismos tabulares para leitura de grandezas (tiles, tabelas, listas). */
+.num-tab {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barra de navegação inferior fixa no celular: respeita a safe-area do aparelho. */
+.barra-inferior {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Afordância de card clicável (listas de quadros/circuitos). */
+.link-cartao {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+.link-cartao:hover .titulo-cartao {
+  color: var(--mantine-color-brand-6);
+}

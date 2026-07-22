@@ -27,8 +27,17 @@
 | React 18 + TypeScript | SPA |
 | Vite | build/dev server (proxy `/api` → backend em dev) |
 | React Router 6 | rotas |
-| CSS puro (`src/styles.css`, variáveis CSS) | tema simples, mobile-first — **sem** framework CSS |
+| **Mantine 7** (`@mantine/core`, `@mantine/hooks`, `@mantine/notifications`) | **design system**: componentes acessíveis e modernos, tema com tokens, dark mode nativo — tudo empacotado pelo Vite (**sem CDN em runtime**, mantém o app offline atrás do nginx) |
+| `@tabler/icons-react` | ícones (empacotados, tree-shakeable) |
+| Inter via `@fontsource/inter` | tipografia moderna, empacotada (sem CDN) |
+| `src/theme.ts` | tokens do tema (cor da marca, raio, fontes, sombras) |
 | `fetch` tipado em `src/api/` | **nunca** chamar API direto de componente |
+
+> **Por que Mantine e não Bootstrap?** Bootstrap nasceu na era jQuery, tem visual datado e não é
+> TypeScript-first. Mantine nasceu para **React + TypeScript**: componentes tipados, acessíveis
+> (ARIA), lindos por padrão, com sistema de tema, dark mode e hooks — alinhado à stack e ao pedido
+> de um visual moderno. Tudo é empacotado no build (CSS-in-JS extraído + estilos estáticos), então
+> **nenhuma requisição externa** em runtime — preserva o isolamento do app servido pelo nginx.
 
 ### Infraestrutura
 - **Docker Compose** com 3 serviços: `db` (postgres:16-alpine), `api` (Spring Boot), `web` (nginx servindo o build do Vite e fazendo proxy de `/api` para `api:8080`).
@@ -59,10 +68,11 @@ backend/src/main/resources/
 frontend/src/
 ├── api/               cliente HTTP tipado (client.ts, quadros.ts, circuitos.ts)
 ├── types/             tipos TS espelhando os DTOs do backend
-├── components/        componentes reutilizáveis (Campo, Tabela, StatTile, ...)
+├── components/        componentes reutilizáveis (StatTile, ResultadoDimensionamento, QuadroForm, ...)
 ├── pages/             1 pasta por tela (NovoCircuito/, Circuitos/, DetalheCircuito/, Resumo/, Quadros/)
-├── App.tsx            rotas + layout (navegação inferior no mobile)
-└── styles.css         variáveis de tema + estilos globais
+├── theme.ts           tokens do tema Mantine (cor da marca, raio, fontes)
+├── App.tsx            rotas + AppShell (header da marca + navegação responsiva)
+└── main.tsx           MantineProvider + ColorSchemeScript + imports de estilo (Mantine, Inter, app.css)
 ```
 
 ### Organização por feature
@@ -306,6 +316,74 @@ export const criarCircuito = (quadroId: number, corpo: CircuitoRequest) =>
 
 Componentes **nunca** usam `fetch` direto; toda chamada passa por `api/`.
 
+### 4.11 Frontend — Design System (Mantine)
+
+O visual é padronizado pelo **Mantine 7**. O objetivo é um app **moderno, limpo e mobile-first**,
+com aparência profissional sem CSS artesanal espalhado. Regras:
+
+**Provider e tema.** Toda a árvore fica sob `<MantineProvider theme={theme}>` no `main.tsx`, com
+`<ColorSchemeScript>` (evita flash no dark mode) e os imports de estilo **estáticos**
+(`@mantine/core/styles.css`, `@mantine/notifications/styles.css`, `@fontsource/inter`). O tema vive
+em `src/theme.ts` — **nunca** hardcode cor/raio/fonte num componente; use os tokens.
+
+```ts
+// src/theme.ts — fonte única dos tokens visuais
+import { createTheme } from '@mantine/core';
+
+export const theme = createTheme({
+  primaryColor: 'brand',
+  colors: { brand: [/* 10 tons do azul da marca, do claro ao escuro */] },
+  fontFamily: 'Inter, system-ui, sans-serif',
+  defaultRadius: 'md',
+  // headings, sombras e outros tokens compartilhados
+});
+```
+
+**Tokens (o que usar):**
+
+| Token | Uso |
+|---|---|
+| `primaryColor: 'brand'` | um azul de engenharia (confiança); acento único, sem paleta categórica |
+| `defaultRadius: 'md'` | cantos suaves consistentes (cards, inputs, botões) |
+| `fontFamily: Inter` | tipografia; números com `ff="monospace"`/`fw` para leitura de grandezas |
+| `Card`/`Paper` com `withBorder` + `shadow="sm"` | superfícies elevadas discretas |
+
+**Mapeamento padrão (qual componente para cada padrão):**
+
+| Padrão da tela | Componente Mantine |
+|---|---|
+| Casca do app (header + conteúdo) | `AppShell` (header fixo) + `Container size="lg"` |
+| Navegação Circuitos/Quadro Elétrico | `SegmentedControl` (desktop) / barra inferior fixa no mobile |
+| Agrupar campos do formulário | `Card withBorder` + `Fieldset` (`legend`) |
+| Campo numérico (W, FP, comprimento…) | `NumberInput` (com `suffix`/`decimalScale`) |
+| Enum (tipo, tensão, método…) | `Select` (dados de `/api/referencias`) |
+| Botão de ação | `Button` (primário) / `variant="light"` (secundário) / `color="red"` (excluir) |
+| Lista de circuitos / quadros | `Card` clicável em `SimpleGrid`/`Stack` |
+| Disjuntor, seção do cabo, tipo | `Badge` (pílula) |
+| Tabela do quadro de cargas | `Table` (Mantine) com `Table.ScrollContainer` (overflow no mobile) |
+| KPI do alimentador | `StatTile` próprio (Paper + rótulo dimmed + valor grande + legenda) |
+| Carregando / erro / vazio | `Loader`/`Skeleton` · `Alert color="red"` · estado vazio com CTA |
+| Feedback de ação (salvo/erro) | `notifications.show(...)` (`@mantine/notifications`) |
+| Confirmar exclusão | `modals.openConfirmModal(...)` (ou `window.confirm` como fallback) |
+
+**Dark mode.** Nativo do Mantine (`useMantineColorScheme`). O header tem um toggle
+(sol/lua, `@tabler/icons-react`). Cores sempre via tokens do tema — **nunca** `#hex` fixo em
+componente, senão o dark quebra.
+
+**Mobile-first.** Props responsivas do Mantine (`SimpleGrid cols={{ base: 1, sm: 2 }}`,
+`visibleFrom`/`hiddenFrom`). A navegação é barra **inferior fixa** no celular (alcance do polegar)
+e vira controle no topo em telas largas. Tabelas largas sempre em `Table.ScrollContainer`.
+
+**StatTile (KPI).** Mantém os princípios de dataviz: rótulo em caixa de frase (tinta dimmed),
+valor grande e legível (algarismos tabulares), legenda opcional dimmed. É um wrapper fino sobre
+`Paper` — não reestilize tile a tile.
+
+**Acessibilidade.** Todo input com `label` (o Mantine liga `htmlFor`); foco visível (padrão do
+Mantine); erros ancorados no campo via prop `error` do input (mapeada do envelope `erros`).
+
+**O que NÃO fazer:** CSS artesanal por componente quando um componente Mantine resolve; `style`
+inline com cor fixa; baixar fonte/ícone de CDN (tudo empacotado); `fetch` na camada de view (§4.10).
+
 ---
 
 ## 5. Convenções de Nomenclatura
@@ -338,7 +416,7 @@ termos técnicos de infraestrutura em inglês (`Repository`, `Request`).
 6. [ ] **Cálculo** — se envolver fórmula nova: atualizar `docs/CALCULOS.md` + `calc/` + teste dourado
 7. [ ] **Controller** thin + rota na tabela da §4.8 deste documento
 8. [ ] **Testes**: unidade do `calc/`; `@WebMvcTest` do controller ou teste de integração do fluxo
-9. [ ] **Frontend**: `types/` → `api/` → página; tratar carregando/erro/vazio
+9. [ ] **Frontend**: `types/` → `api/` → página com **componentes Mantine** (§4.11, sem CSS artesanal); tratar carregando/erro/vazio
 10. [ ] **Swagger** conferido em `/swagger-ui.html` (a annotation `@Operation` é opcional, o contrato não)
 11. [ ] **Build completo**: `docker compose build && docker compose up -d` e smoke-test das telas
 

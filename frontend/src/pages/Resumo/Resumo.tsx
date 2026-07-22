@@ -1,10 +1,23 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
+import {
+  Alert,
+  Anchor,
+  Button,
+  Card,
+  Center,
+  Group,
+  Loader,
+  SimpleGrid,
+  Stack,
+  Table,
+  Text,
+  Title,
+} from '@mantine/core';
+import { IconAlertTriangle, IconPlus, IconSettings } from '@tabler/icons-react';
 import type { ContextoQuadro } from '../../App';
 import { buscarResumoQuadro } from '../../api/quadros';
 import { obterReferencias } from '../../api/referencias';
-import { Alerta } from '../../components/Alerta';
-import { Carregando } from '../../components/Carregando';
 import { QuadroForm } from '../../components/QuadroForm';
 import { StatTile } from '../../components/StatTile';
 import type { TipoCircuito } from '../../types/comum';
@@ -42,9 +55,18 @@ export function Resumo() {
 
   if (resumo === null) {
     return erro ? (
-      <Alerta aoTentarNovamente={() => void carregar()}>{erro}</Alerta>
+      <Alert color="red" icon={<IconAlertTriangle size={16} />} title="Erro" mt="lg">
+        <Group justify="space-between" wrap="wrap" gap="sm">
+          <Text size="sm">{erro}</Text>
+          <Button variant="light" color="red" size="xs" onClick={() => void carregar()}>
+            Tentar novamente
+          </Button>
+        </Group>
+      </Alert>
     ) : (
-      <Carregando texto="Carregando resumo…" />
+      <Center py="xl">
+        <Loader />
+      </Center>
     );
   }
 
@@ -52,22 +74,35 @@ export function Resumo() {
   const circuitos = [...resumo.circuitos].sort((a, b) => a.numero - b.numero);
 
   return (
-    <>
-      <header className="pagina-cabeca">
-        <div>
-          <h1>Resumo do Dimensionamento</h1>
-          <p className="texto-mudo">{resumo.quadro.nome} — NBR 5410</p>
+    <Stack gap="md">
+      <Group justify="space-between" align="flex-end" wrap="wrap" gap="sm" mt="lg">
+        <div style={{ minWidth: 0 }}>
+          <Title order={1} fz={{ base: 'h2', sm: 'h1' }}>
+            Quadro Elétrico
+          </Title>
+          <Text c="dimmed" size="sm" mt={4}>
+            {resumo.quadro.nome} — disjuntor geral e cabo alimentador (NBR 5410)
+          </Text>
         </div>
-        <button
-          type="button"
-          className="botao-sec"
+        <Button
+          variant="default"
+          leftSection={<IconSettings size={16} />}
           onClick={() => setEditandoQuadro((atual) => !atual)}
         >
           {editandoQuadro ? 'Fechar Configurações' : 'Configurações do Alimentador'}
-        </button>
-      </header>
+        </Button>
+      </Group>
 
-      {erro ? <Alerta aoTentarNovamente={() => void carregar()}>{erro}</Alerta> : null}
+      {erro ? (
+        <Alert color="red" icon={<IconAlertTriangle size={16} />} title="Erro">
+          <Group justify="space-between" wrap="wrap" gap="sm">
+            <Text size="sm">{erro}</Text>
+            <Button variant="light" color="red" size="xs" onClick={() => void carregar()}>
+              Tentar novamente
+            </Button>
+          </Group>
+        </Alert>
+      ) : null}
 
       {editandoQuadro && referencias ? (
         <QuadroForm
@@ -84,17 +119,27 @@ export function Resumo() {
       ) : null}
 
       {alimentador === null ? (
-        <div className="vazio">
-          <p>O quadro ainda não tem circuitos — cadastre o primeiro para ver o resumo.</p>
-          <Link to={`/quadros/${quadroId}/novo`} className="botao">
-            Novo Circuito
-          </Link>
-        </div>
+        <Card padding="xl">
+          <Stack align="center" gap="md">
+            <Text c="dimmed">
+              O quadro ainda não tem circuitos — cadastre o primeiro para ver o resumo.
+            </Text>
+            <Button
+              component={Link}
+              to={`/quadros/${quadroId}/novo`}
+              leftSection={<IconPlus size={16} />}
+            >
+              Novo Circuito
+            </Button>
+          </Stack>
+        </Card>
       ) : (
         <>
-          <section className="cartao">
-            <h2>Alimentador Geral</h2>
-            <div className="tiles">
+          <Card>
+            <Title order={2} fz="h4" mb="md">
+              Alimentador Geral
+            </Title>
+            <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="sm">
               <StatTile
                 rotulo="Corrente total"
                 valor={amp(alimentador.correnteTotalA)}
@@ -133,69 +178,74 @@ export function Resumo() {
                 valor={kva(alimentador.capacidadeQuadroVA)}
                 legenda={`${alimentador.tensaoV}V · ${alimentador.fases}P`}
               />
-            </div>
-            <p className="texto-mudo nota-rodape">
+            </SimpleGrid>
+            <Text size="sm" c="dimmed" mt="md">
               Alimentador: {alimentador.rotuloCabo} · Neutro {mm2(alimentador.secaoNeutroMm2)} ·
               Terra {mm2(alimentador.secaoTerraMm2)}
-            </p>
-          </section>
+            </Text>
+          </Card>
 
-          <section className="cartao">
-            <h2>Circuitos</h2>
-            <div className="tabela-wrap">
-              <table>
-                <caption className="oculto">Circuitos do quadro com resultados</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Nº</th>
-                    <th scope="col">Descrição</th>
-                    <th scope="col">Tipo</th>
-                    <th scope="col">Tensão</th>
-                    <th scope="col" className="celula-num">Potência</th>
-                    <th scope="col" className="celula-num">Ip (A)</th>
-                    <th scope="col" className="celula-num">Ic (A)</th>
-                    <th scope="col">Disjuntor</th>
-                    <th scope="col" className="celula-num">Cabo</th>
-                    <th scope="col" className="celula-num">N / PE</th>
-                  </tr>
-                </thead>
-                <tbody>
+          <Card>
+            <Title order={2} fz="h4" mb="md">
+              Circuitos
+            </Title>
+            <Table.ScrollContainer minWidth={760}>
+              <Table striped highlightOnHover verticalSpacing="xs" horizontalSpacing="md">
+                <Table.Caption style={{ captionSide: 'bottom' }}>
+                  {circuitos.length === 1 ? '1 circuito' : `${circuitos.length} circuitos`} · Total:{' '}
+                  {kw(resumo.quadro.potenciaTotalW)}
+                </Table.Caption>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Nº</Table.Th>
+                    <Table.Th>Descrição</Table.Th>
+                    <Table.Th>Tipo</Table.Th>
+                    <Table.Th>Tensão</Table.Th>
+                    <Table.Th ta="right">Potência</Table.Th>
+                    <Table.Th ta="right">Ip (A)</Table.Th>
+                    <Table.Th ta="right">Ic (A)</Table.Th>
+                    <Table.Th>Disjuntor</Table.Th>
+                    <Table.Th ta="right">Cabo</Table.Th>
+                    <Table.Th ta="right">N / PE</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
                   {circuitos.map((c) => (
-                    <tr key={c.id}>
-                      <td>{c.numero}</td>
-                      <td>
-                        <Link to={`/quadros/${quadroId}/circuitos/${c.id}`}>
+                    <Table.Tr key={c.id}>
+                      <Table.Td className="num-tab">{c.numero}</Table.Td>
+                      <Table.Td>
+                        <Anchor component={Link} to={`/quadros/${quadroId}/circuitos/${c.id}`} size="sm">
                           {c.descricao ?? `Circuito ${c.numero}`}
-                        </Link>
-                      </td>
-                      <td>{rotuloTipo(c.tipo)}</td>
-                      <td>
+                        </Anchor>
+                      </Table.Td>
+                      <Table.Td>{rotuloTipo(c.tipo)}</Table.Td>
+                      <Table.Td className="num-tab">
                         {c.tensaoV}V · {c.fases}P
-                      </td>
-                      <td className="celula-num">{watts(c.potenciaW)}</td>
-                      <td className="celula-num">{num(c.resultado.correnteProjetoA, 1)}</td>
-                      <td className="celula-num">{num(c.resultado.correnteCorrigidaA, 1)}</td>
-                      <td>{c.resultado.disjuntor.rotulo}</td>
-                      <td className="celula-num">{mm2(c.resultado.secaoFinalMm2)}</td>
-                      <td className="celula-num">
+                      </Table.Td>
+                      <Table.Td ta="right" className="num-tab">
+                        {watts(c.potenciaW)}
+                      </Table.Td>
+                      <Table.Td ta="right" className="num-tab">
+                        {num(c.resultado.correnteProjetoA, 1)}
+                      </Table.Td>
+                      <Table.Td ta="right" className="num-tab">
+                        {num(c.resultado.correnteCorrigidaA, 1)}
+                      </Table.Td>
+                      <Table.Td className="num-tab">{c.resultado.disjuntor.rotulo}</Table.Td>
+                      <Table.Td ta="right" className="num-tab">
+                        {mm2(c.resultado.secaoFinalMm2)}
+                      </Table.Td>
+                      <Table.Td ta="right" className="num-tab">
                         {num(c.resultado.secaoNeutroMm2)}/{num(c.resultado.secaoTerraMm2)} mm²
-                      </td>
-                    </tr>
+                      </Table.Td>
+                    </Table.Tr>
                   ))}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colSpan={10}>
-                      {circuitos.length === 1 ? '1 circuito' : `${circuitos.length} circuitos`} ·
-                      Total: {kw(resumo.quadro.potenciaTotalW)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </section>
+                </Table.Tbody>
+              </Table>
+            </Table.ScrollContainer>
+          </Card>
         </>
       )}
-    </>
+    </Stack>
   );
 }
