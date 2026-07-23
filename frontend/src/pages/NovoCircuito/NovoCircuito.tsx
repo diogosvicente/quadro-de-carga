@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Accordion,
   Alert,
@@ -20,7 +20,7 @@ import {
   Title,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconAlertTriangle } from '@tabler/icons-react';
+import { IconArrowLeft, IconAlertTriangle } from '@tabler/icons-react';
 import { ApiError } from '../../api/client';
 import {
   atualizarCircuito,
@@ -367,7 +367,18 @@ export function NovoCircuito() {
 
   return (
     <Stack gap="md">
-      <div style={{ marginTop: 'var(--mantine-spacing-lg)' }}>
+      <Button
+        component={Link}
+        to={`/quadros/${quadroId}/circuitos`}
+        variant="subtle"
+        size="compact-sm"
+        leftSection={<IconArrowLeft size={16} />}
+        mt="lg"
+        style={{ alignSelf: 'flex-start' }}
+      >
+        Circuitos
+      </Button>
+      <div>
         <Title order={1} fz={{ base: 'h2', sm: 'h1' }}>
           {editando ? `Editar Circuito ${form.numero}` : 'Novo Circuito'}
         </Title>

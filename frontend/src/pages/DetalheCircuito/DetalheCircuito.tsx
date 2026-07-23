@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
   Badge,
@@ -14,7 +14,7 @@ import {
 } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
-import { IconAlertTriangle, IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconArrowLeft, IconAlertTriangle, IconPencil, IconTrash } from '@tabler/icons-react';
 import { buscarCircuito, removerCircuito } from '../../api/circuitos';
 import { obterReferencias } from '../../api/referencias';
 import {
@@ -128,7 +128,18 @@ export function DetalheCircuito() {
 
   return (
     <Stack gap="md">
-      <Group justify="space-between" align="flex-start" wrap="wrap" gap="sm" mt="lg">
+      <Button
+        component={Link}
+        to={`/quadros/${quadroId}/circuitos`}
+        variant="subtle"
+        size="compact-sm"
+        leftSection={<IconArrowLeft size={16} />}
+        mt="lg"
+        style={{ alignSelf: 'flex-start' }}
+      >
+        Circuitos
+      </Button>
+      <Group justify="space-between" align="flex-start" wrap="wrap" gap="sm">
         <div style={{ minWidth: 0 }}>
           <Title order={1} fz={{ base: 'h2', sm: 'h1' }}>
             Circuito {c.numero}

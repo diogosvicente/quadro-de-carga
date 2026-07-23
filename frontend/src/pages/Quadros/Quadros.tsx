@@ -16,16 +16,15 @@ import {
   SimpleGrid,
   Stack,
   Text,
-  ThemeIcon,
   Title,
 } from '@mantine/core';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
-import { IconAlertTriangle, IconBolt, IconPlus } from '@tabler/icons-react';
+import { IconAlertTriangle, IconPlus } from '@tabler/icons-react';
 import { listarQuadros, removerQuadro } from '../../api/quadros';
 import { obterReferencias } from '../../api/referencias';
+import { AppHeader } from '../../components/AppHeader';
 import { QuadroForm } from '../../components/QuadroForm';
-import { ToggleTema } from '../../components/ToggleTema';
 import type { QuadroResponse } from '../../types/quadro';
 import type { ReferenciasResponse } from '../../types/referencias';
 import { kw } from '../../utils/formato';
@@ -203,21 +202,7 @@ export function Quadros() {
 
   return (
     <AppShell header={{ height: 56 }} padding="md">
-      <AppShell.Header>
-        <Container size="lg" h="100%">
-          <Group h="100%" justify="space-between" wrap="nowrap" gap="sm">
-            <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-              <ThemeIcon variant="light" radius="md" size="lg">
-                <IconBolt size={20} />
-              </ThemeIcon>
-              <Text fw={700} size="sm" truncate>
-                Dimensionamento NBR 5410 — UERJ
-              </Text>
-            </Group>
-            <ToggleTema />
-          </Group>
-        </Container>
-      </AppShell.Header>
+      <AppHeader marca="Dimensionamento NBR 5410 — UERJ" />
 
       <AppShell.Main>
         <Container size="lg" px={0}>

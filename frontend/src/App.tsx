@@ -20,14 +20,16 @@ import {
   SegmentedControl,
   Stack,
   Text,
-  ThemeIcon,
   UnstyledButton,
 } from '@mantine/core';
-import { IconBolt, IconLayoutGrid, IconListDetails, IconPlus } from '@tabler/icons-react';
+import { IconLayoutGrid, IconListDetails, IconPlus } from '@tabler/icons-react';
 import type { Icon } from '@tabler/icons-react';
 import { buscarQuadro } from './api/quadros';
 import type { QuadroResponse } from './types/quadro';
-import { ToggleTema } from './components/ToggleTema';
+import { estaAutenticado } from './auth';
+import { AppHeader } from './components/AppHeader';
+import { RequireAuth } from './components/RequireAuth';
+import { Login } from './pages/Login/Login';
 import { Quadros } from './pages/Quadros/Quadros';
 import { NovoCircuito } from './pages/NovoCircuito/NovoCircuito';
 import { Circuitos } from './pages/Circuitos/Circuitos';
@@ -35,9 +37,10 @@ import { DetalheCircuito } from './pages/DetalheCircuito/DetalheCircuito';
 import { Resumo } from './pages/Resumo/Resumo';
 
 /**
- * Layout das telas de um quadro: cabeçalho com retorno à lista de quadros e
- * navegação Novo Circuito | Circuitos | Quadro Elétrico — barra fixa embaixo no
- * celular (alcance do polegar) e SegmentedControl no topo em telas largas.
+ * Layout das telas de um quadro: cabeçalho compartilhado (AppHeader) com a marca
+ * de retorno à home, breadcrumb "Quadros / <nome>" e navegação Novo Circuito |
+ * Circuitos | Quadro Elétrico — barra fixa embaixo no celular (alcance do polegar)
+ * e SegmentedControl no topo em telas largas.
  */
 export interface ContextoQuadro {
   /** Recarrega o quadro exibido no cabeçalho (ex.: após renomear nas configurações). */
@@ -87,34 +90,25 @@ function QuadroLayout() {
 
   return (
     <AppShell header={{ height: 56 }} padding="md">
-      <AppShell.Header>
-        <Container size="lg" h="100%">
-          <Group h="100%" justify="space-between" wrap="nowrap" gap="sm">
-            <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-              <ThemeIcon variant="light" radius="md" size="lg">
-                <IconBolt size={20} />
-              </ThemeIcon>
-              <Breadcrumbs separator="/" style={{ minWidth: 0 }}>
-                <Anchor component={Link} to="/?lista=1" fw={600} size="sm">
-                  Quadros
-                </Anchor>
-                <Text fw={700} size="sm" truncate maw={{ base: 150, sm: 340 }}>
-                  {quadro ? quadro.nome : `Quadro ${quadroId}`}
-                </Text>
-              </Breadcrumbs>
-            </Group>
-            <Group gap="xs" wrap="nowrap">
-              <SegmentedControl
-                visibleFrom="sm"
-                value={secao}
-                onChange={irPara}
-                data={ITENS_NAV.map((it) => ({ value: it.valor, label: it.rotulo }))}
-              />
-              <ToggleTema />
-            </Group>
-          </Group>
-        </Container>
-      </AppShell.Header>
+      <AppHeader
+        navegacao={
+          <SegmentedControl
+            visibleFrom="sm"
+            value={secao}
+            onChange={irPara}
+            data={ITENS_NAV.map((it) => ({ value: it.valor, label: it.rotulo }))}
+          />
+        }
+      >
+        <Breadcrumbs separator="/" style={{ minWidth: 0 }}>
+          <Anchor component={Link} to="/?lista=1" fw={600} size="sm">
+            Quadros
+          </Anchor>
+          <Text fw={700} size="sm" truncate maw={{ base: 150, sm: 340 }}>
+            {quadro ? quadro.nome : `Quadro ${quadroId}`}
+          </Text>
+        </Breadcrumbs>
+      </AppHeader>
 
       <AppShell.Main>
         <Container size="lg" px={0} pb={{ base: 72, sm: 'md' }}>
@@ -162,20 +156,28 @@ function QuadroLayout() {
   );
 }
 
+/** Rota desconhecida: leva à home se autenticado, senão para o login. */
+function RotaDesconhecida() {
+  return <Navigate to={estaAutenticado() ? '/' : '/login'} replace />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Quadros />} />
-        <Route path="/quadros/:id" element={<QuadroLayout />}>
-          <Route index element={<Navigate to="circuitos" replace />} />
-          <Route path="novo" element={<NovoCircuito />} />
-          <Route path="circuitos" element={<Circuitos />} />
-          <Route path="circuitos/:cid" element={<DetalheCircuito />} />
-          <Route path="circuitos/:cid/editar" element={<NovoCircuito />} />
-          <Route path="resumo" element={<Resumo />} />
+        <Route path="/login" element={<Login />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/" element={<Quadros />} />
+          <Route path="/quadros/:id" element={<QuadroLayout />}>
+            <Route index element={<Navigate to="circuitos" replace />} />
+            <Route path="novo" element={<NovoCircuito />} />
+            <Route path="circuitos" element={<Circuitos />} />
+            <Route path="circuitos/:cid" element={<DetalheCircuito />} />
+            <Route path="circuitos/:cid/editar" element={<NovoCircuito />} />
+            <Route path="resumo" element={<Resumo />} />
+          </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<RotaDesconhecida />} />
       </Routes>
     </BrowserRouter>
   );
