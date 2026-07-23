@@ -12,6 +12,7 @@ export interface QuadroRequest {
   metodoInstalacao: MetodoInstalacao;
   quedaAdmissivelPct: number;
   temperaturaC: number;
+  circuitosParalelos: number;
 }
 
 export interface QuadroResponse {
@@ -26,6 +27,7 @@ export interface QuadroResponse {
   metodoInstalacao: MetodoInstalacao;
   quedaAdmissivelPct: number;
   temperaturaC: number;
+  circuitosParalelos: number;
   totalCircuitos: number;
   potenciaTotalW: number;
 }
@@ -41,6 +43,8 @@ export interface ResumoAlimentador {
   correnteCalculadaA: number;
   maiorDisjuntorCircuitoA: number | null;
   secaoAlimentadorMm2: number;
+  circuitosParalelos: number;
+  secaoFaseParaleloMm2: number;
   secaoPorCapacidadeMm2: number;
   secaoMinimaPorRegraMm2: number | null;
   maiorSecaoCircuitoMm2: number | null;

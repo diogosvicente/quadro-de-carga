@@ -10,6 +10,7 @@ export interface CircuitoRequest {
   fatorPotencia: number;
   comprimentoM: number;
   circuitosAgrupados: number;
+  circuitosParalelos: number;
   temperaturaC: number;
   metodoInstalacao?: MetodoInstalacao;
   isolante?: Isolante;
@@ -38,6 +39,8 @@ export interface ResultadoCircuito {
   secaoQuedaMm2: number;
   secaoMinimaMm2: number;
   secaoFinalMm2: number;
+  circuitosParalelos: number;
+  secaoFaseParaleloMm2: number;
   secaoNeutroMm2: number;
   secaoTerraMm2: number;
   rotuloCabo: string;
@@ -57,6 +60,7 @@ export interface CircuitoResponse {
   fatorPotencia: number;
   comprimentoM: number;
   circuitosAgrupados: number;
+  circuitosParalelos: number;
   temperaturaC: number;
   metodoInstalacao: MetodoInstalacao;
   isolante: Isolante;

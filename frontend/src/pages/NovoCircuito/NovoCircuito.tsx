@@ -10,6 +10,7 @@ import {
   Group,
   Loader,
   NumberInput,
+  SegmentedControl,
   Select,
   SimpleGrid,
   Stack,
@@ -32,7 +33,7 @@ import { ResultadoDimensionamento } from '../../components/ResultadoDimensioname
 import type { CircuitoRequest, CircuitoResponse, ResultadoCircuito } from '../../types/circuito';
 import type { Isolante, MetodoInstalacao, TipoCircuito } from '../../types/comum';
 import type { ReferenciasResponse } from '../../types/referencias';
-import { num } from '../../utils/formato';
+import { num, watts } from '../../utils/formato';
 
 interface FormCircuito {
   numero: string;
@@ -41,6 +42,8 @@ interface FormCircuito {
   tensaoV: string;
   fases: string;
   potenciaW: string;
+  modoEntrada: 'potencia' | 'corrente';
+  correnteA: string;
   fatorPotencia: string;
   comprimentoM: string;
   circuitosAgrupados: string;
@@ -50,6 +53,7 @@ interface FormCircuito {
   formaAgrupamentoRef: string;
   fatorDemanda: string;
   quedaAdmissivelPct: string;
+  circuitosParalelos: string;
   linhaSubterranea: boolean;
 }
 
@@ -61,6 +65,8 @@ const FORM_PADRAO: FormCircuito = {
   tensaoV: '127',
   fases: '1',
   potenciaW: '',
+  modoEntrada: 'potencia',
+  correnteA: '',
   fatorPotencia: '0.92',
   comprimentoM: '',
   circuitosAgrupados: '1',
@@ -70,6 +76,7 @@ const FORM_PADRAO: FormCircuito = {
   formaAgrupamentoRef: '1',
   fatorDemanda: '1',
   quedaAdmissivelPct: '4',
+  circuitosParalelos: '1',
   linhaSubterranea: false,
 };
 
@@ -79,6 +86,7 @@ const CAMPOS_AVANCADOS = [
   'formaAgrupamentoRef',
   'fatorDemanda',
   'quedaAdmissivelPct',
+  'circuitosParalelos',
   'linhaSubterranea',
 ];
 
@@ -90,6 +98,8 @@ function deResposta(c: CircuitoResponse): FormCircuito {
     tensaoV: String(c.tensaoV),
     fases: String(c.fases),
     potenciaW: String(c.potenciaW),
+    modoEntrada: 'potencia',
+    correnteA: '',
     fatorPotencia: String(c.fatorPotencia),
     comprimentoM: String(c.comprimentoM),
     circuitosAgrupados: String(c.circuitosAgrupados),
@@ -99,12 +109,30 @@ function deResposta(c: CircuitoResponse): FormCircuito {
     formaAgrupamentoRef: String(c.formaAgrupamentoRef),
     fatorDemanda: String(c.fatorDemanda),
     quedaAdmissivelPct: String(c.quedaAdmissivelPct),
+    circuitosParalelos: String(c.circuitosParalelos),
     linhaSubterranea: c.linhaSubterranea,
   };
 }
 
 function paraNumero(texto: string): number {
   return Number(texto.trim().replace(',', '.'));
+}
+
+const RAIZ_TRES = Math.sqrt(3);
+
+/**
+ * Deriva a potência (W) a partir da corrente informada, conforme o nº de fases:
+ * monofásico/bifásico → P = V·I·FP; trifásico → P = √3·V·I·FP. Arredonda a 2 casas.
+ */
+function potenciaDeCorrente(
+  tensaoV: number,
+  correnteA: number,
+  fatorPotencia: number,
+  fases: number,
+): number {
+  const base = tensaoV * correnteA * fatorPotencia;
+  const potencia = fases === 3 ? RAIZ_TRES * base : base;
+  return Math.round(potencia * 100) / 100;
 }
 
 /** Formulário de circuito — criação ("/quadros/:id/novo") e edição ("…/:cid/editar"). */
@@ -165,9 +193,25 @@ export function NovoCircuito() {
     if (form.numero.trim() === '' || !Number.isInteger(numero) || numero <= 0) {
       locais.numero = 'Informe um número inteiro maior que zero.';
     }
-    const potenciaW = paraNumero(form.potenciaW);
-    if (form.potenciaW.trim() === '' || Number.isNaN(potenciaW) || potenciaW <= 0) {
-      locais.potenciaW = 'Informe a potência em watts (maior que zero).';
+    let potenciaW: number;
+    if (form.modoEntrada === 'corrente') {
+      const correnteA = paraNumero(form.correnteA);
+      if (form.correnteA.trim() === '' || Number.isNaN(correnteA) || correnteA <= 0) {
+        locais.correnteA = 'Informe a corrente em ampères (maior que zero).';
+        potenciaW = Number.NaN;
+      } else {
+        potenciaW = potenciaDeCorrente(
+          paraNumero(form.tensaoV),
+          correnteA,
+          paraNumero(form.fatorPotencia),
+          paraNumero(form.fases),
+        );
+      }
+    } else {
+      potenciaW = paraNumero(form.potenciaW);
+      if (form.potenciaW.trim() === '' || Number.isNaN(potenciaW) || potenciaW <= 0) {
+        locais.potenciaW = 'Informe a potência em watts (maior que zero).';
+      }
     }
     const comprimentoM = paraNumero(form.comprimentoM);
     if (form.comprimentoM.trim() === '' || Number.isNaN(comprimentoM) || comprimentoM <= 0) {
@@ -193,6 +237,10 @@ export function NovoCircuito() {
     if (Number.isNaN(quedaAdmissivelPct) || quedaAdmissivelPct <= 0) {
       locais.quedaAdmissivelPct = 'Informe a queda admissível em % (maior que zero).';
     }
+    const circuitosParalelos = paraNumero(form.circuitosParalelos);
+    if (!Number.isInteger(circuitosParalelos) || circuitosParalelos < 1) {
+      locais.circuitosParalelos = 'Informe um inteiro maior ou igual a 1.';
+    }
     if (Object.keys(locais).length > 0) {
       setErros(locais);
       setMensagem('Corrija os campos destacados.');
@@ -217,6 +265,7 @@ export function NovoCircuito() {
       formaAgrupamentoRef: paraNumero(form.formaAgrupamentoRef),
       fatorDemanda,
       quedaAdmissivelPct,
+      circuitosParalelos,
       linhaSubterranea: form.linhaSubterranea,
     };
   };
@@ -300,6 +349,22 @@ export function NovoCircuito() {
 
   const temErroAvancado = CAMPOS_AVANCADOS.some((campo) => campo in erros);
 
+  const correnteInformada = paraNumero(form.correnteA);
+  const fatorPotenciaAtual = paraNumero(form.fatorPotencia);
+  const potenciaDerivada =
+    form.modoEntrada === 'corrente' &&
+    form.correnteA.trim() !== '' &&
+    Number.isFinite(correnteInformada) &&
+    correnteInformada > 0 &&
+    Number.isFinite(fatorPotenciaAtual)
+      ? potenciaDeCorrente(
+          paraNumero(form.tensaoV),
+          correnteInformada,
+          fatorPotenciaAtual,
+          paraNumero(form.fases),
+        )
+      : null;
+
   return (
     <Stack gap="md">
       <div style={{ marginTop: 'var(--mantine-spacing-lg)' }}>
@@ -356,60 +421,91 @@ export function NovoCircuito() {
           </Fieldset>
 
           <Fieldset legend="Dados Elétricos" radius="md">
-            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-              <Select
-                label="Tensão (V)"
-                required
-                data={tensoes}
-                value={form.tensaoV}
-                error={erros.tensaoV}
-                allowDeselect={false}
-                onChange={(v) => {
-                  if (v) alterar('tensaoV', v);
-                }}
+            <Stack gap="md">
+              <SegmentedControl
+                fullWidth
+                aria-label="Modo de entrada dos dados elétricos"
+                value={form.modoEntrada}
+                data={[
+                  { label: 'Potência (W)', value: 'potencia' },
+                  { label: 'Corrente (A)', value: 'corrente' },
+                ]}
+                onChange={(v) => alterar('modoEntrada', v as FormCircuito['modoEntrada'])}
               />
-              <Select
-                label="Fases"
-                required
-                data={fases}
-                value={form.fases}
-                error={erros.fases}
-                allowDeselect={false}
-                onChange={(v) => {
-                  if (v) alterar('fases', v);
-                }}
-              />
-              <NumberInput
-                label="Potência Total (W)"
-                required
-                value={form.potenciaW}
-                error={erros.potenciaW}
-                placeholder="Ex: 1200"
-                suffix=" W"
-                step={1}
-                allowNegative={false}
-                onChange={(v) => alterar('potenciaW', String(v))}
-              />
-              <NumberInput
-                label="Fator de Potência"
-                value={form.fatorPotencia}
-                error={erros.fatorPotencia}
-                step={0.01}
-                allowNegative={false}
-                onChange={(v) => alterar('fatorPotencia', String(v))}
-              />
-              <NumberInput
-                label="Comprimento do Fio (m)"
-                required
-                value={form.comprimentoM}
-                error={erros.comprimentoM}
-                placeholder="Ex: 30"
-                suffix=" m"
-                step={0.1}
-                allowNegative={false}
-                onChange={(v) => alterar('comprimentoM', String(v))}
-              />
-            </SimpleGrid>
+              <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                <Select
+                  label="Tensão (V)"
+                  required
+                  data={tensoes}
+                  value={form.tensaoV}
+                  error={erros.tensaoV}
+                  allowDeselect={false}
+                  onChange={(v) => {
+                    if (v) alterar('tensaoV', v);
+                  }}
+                />
+                <Select
+                  label="Fases"
+                  required
+                  data={fases}
+                  value={form.fases}
+                  error={erros.fases}
+                  allowDeselect={false}
+                  onChange={(v) => {
+                    if (v) alterar('fases', v);
+                  }}
+                />
+                {form.modoEntrada === 'corrente' ? (
+                  <NumberInput
+                    label="Corrente (A)"
+                    required
+                    value={form.correnteA}
+                    error={erros.correnteA}
+                    placeholder="Ex: 100"
+                    suffix=" A"
+                    min={0}
+                    step={0.1}
+                    allowNegative={false}
+                    inputWrapperOrder={['label', 'input', 'description', 'error']}
+                    description={
+                      potenciaDerivada !== null ? `≈ ${watts(potenciaDerivada)}` : undefined
+                    }
+                    onChange={(v) => alterar('correnteA', String(v))}
+                  />
+                ) : (
+                  <NumberInput
+                    label="Potência Total (W)"
+                    required
+                    value={form.potenciaW}
+                    error={erros.potenciaW}
+                    placeholder="Ex: 1200"
+                    suffix=" W"
+                    step={1}
+                    allowNegative={false}
+                    onChange={(v) => alterar('potenciaW', String(v))}
+                  />
+                )}
+                <NumberInput
+                  label="Fator de Potência"
+                  value={form.fatorPotencia}
+                  error={erros.fatorPotencia}
+                  step={0.01}
+                  allowNegative={false}
+                  onChange={(v) => alterar('fatorPotencia', String(v))}
+                />
+                <NumberInput
+                  label="Comprimento do Fio (m)"
+                  required
+                  value={form.comprimentoM}
+                  error={erros.comprimentoM}
+                  placeholder="Ex: 30"
+                  suffix=" m"
+                  step={0.1}
+                  allowNegative={false}
+                  onChange={(v) => alterar('comprimentoM', String(v))}
+                />
+              </SimpleGrid>
+            </Stack>
           </Fieldset>
 
           <Fieldset legend="Condições de Instalação" radius="md">
@@ -491,6 +587,17 @@ export function NovoCircuito() {
                       step={0.1}
                       allowNegative={false}
                       onChange={(v) => alterar('quedaAdmissivelPct', String(v))}
+                    />
+                    <NumberInput
+                      label="Circuitos em paralelo"
+                      description="cabos em paralelo por fase"
+                      value={form.circuitosParalelos}
+                      error={erros.circuitosParalelos}
+                      min={1}
+                      step={1}
+                      allowDecimal={false}
+                      allowNegative={false}
+                      onChange={(v) => alterar('circuitosParalelos', String(v))}
                     />
                   </SimpleGrid>
                   <Switch

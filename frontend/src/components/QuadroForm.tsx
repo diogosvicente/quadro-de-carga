@@ -32,9 +32,10 @@ interface FormQuadro {
   metodoInstalacao: MetodoInstalacao;
   quedaAdmissivelPct: string;
   temperaturaC: string;
+  circuitosParalelos: string;
 }
 
-// Defaults do contrato: V127_220, 3, 1, 0, 10, "B1", 2, 30.
+// Defaults do contrato: V127_220, 3, 1, 0, 10, "B1", 2, 30, 1.
 const FORM_PADRAO: FormQuadro = {
   nome: '',
   local: '',
@@ -46,6 +47,7 @@ const FORM_PADRAO: FormQuadro = {
   metodoInstalacao: 'B1',
   quedaAdmissivelPct: '2',
   temperaturaC: '30',
+  circuitosParalelos: '1',
 };
 
 function deResposta(quadro: QuadroResponse): FormQuadro {
@@ -60,6 +62,7 @@ function deResposta(quadro: QuadroResponse): FormQuadro {
     metodoInstalacao: quadro.metodoInstalacao,
     quedaAdmissivelPct: String(quadro.quedaAdmissivelPct),
     temperaturaC: String(quadro.temperaturaC),
+    circuitosParalelos: String(quadro.circuitosParalelos),
   };
 }
 
@@ -122,6 +125,10 @@ export function QuadroForm({
     if (Number.isNaN(temperaturaC)) {
       locais.temperaturaC = 'Informe a temperatura em °C.';
     }
+    const circuitosParalelos = paraNumero(form.circuitosParalelos);
+    if (!Number.isInteger(circuitosParalelos) || circuitosParalelos < 1) {
+      locais.circuitosParalelos = 'Informe um inteiro maior ou igual a 1.';
+    }
     if (Object.keys(locais).length > 0) {
       setErros(locais);
       setMensagem('Corrija os campos destacados.');
@@ -141,6 +148,7 @@ export function QuadroForm({
       metodoInstalacao: form.metodoInstalacao,
       quedaAdmissivelPct,
       temperaturaC,
+      circuitosParalelos,
     };
   };
 
@@ -280,6 +288,17 @@ export function QuadroForm({
                 suffix=" °C"
                 step={1}
                 onChange={(v) => alterar('temperaturaC', String(v))}
+              />
+              <NumberInput
+                label="Circuitos em paralelo do alimentador"
+                description="cabos em paralelo por fase"
+                value={form.circuitosParalelos}
+                error={erros.circuitosParalelos}
+                min={1}
+                step={1}
+                allowDecimal={false}
+                allowNegative={false}
+                onChange={(v) => alterar('circuitosParalelos', String(v))}
               />
             </SimpleGrid>
           ) : null}

@@ -14,7 +14,13 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { IconAlertTriangle, IconPlus, IconSettings } from '@tabler/icons-react';
+import {
+  IconAlertTriangle,
+  IconFileExport,
+  IconFileSpreadsheet,
+  IconPlus,
+  IconSettings,
+} from '@tabler/icons-react';
 import type { ContextoQuadro } from '../../App';
 import { buscarResumoQuadro } from '../../api/quadros';
 import { obterReferencias } from '../../api/referencias';
@@ -84,13 +90,37 @@ export function Resumo() {
             {resumo.quadro.nome} — disjuntor geral e cabo alimentador (NBR 5410)
           </Text>
         </div>
-        <Button
-          variant="default"
-          leftSection={<IconSettings size={16} />}
-          onClick={() => setEditandoQuadro((atual) => !atual)}
-        >
-          {editandoQuadro ? 'Fechar Configurações' : 'Configurações do Alimentador'}
-        </Button>
+        <Group gap="sm" wrap="wrap">
+          {alimentador !== null ? (
+            <>
+              <Button
+                component="a"
+                href={`/api/quadros/${quadroId}/export.xlsx`}
+                download
+                variant="light"
+                leftSection={<IconFileSpreadsheet size={16} />}
+              >
+                Exportar .xlsx
+              </Button>
+              <Button
+                component="a"
+                href={`/api/quadros/${quadroId}/export.dxf`}
+                download
+                variant="light"
+                leftSection={<IconFileExport size={16} />}
+              >
+                Exportar .dxf
+              </Button>
+            </>
+          ) : null}
+          <Button
+            variant="default"
+            leftSection={<IconSettings size={16} />}
+            onClick={() => setEditandoQuadro((atual) => !atual)}
+          >
+            {editandoQuadro ? 'Fechar Configurações' : 'Configurações do Alimentador'}
+          </Button>
+        </Group>
       </Group>
 
       {erro ? (
@@ -182,6 +212,9 @@ export function Resumo() {
             <Text size="sm" c="dimmed" mt="md">
               Alimentador: {alimentador.rotuloCabo} · Neutro {mm2(alimentador.secaoNeutroMm2)} ·
               Terra {mm2(alimentador.secaoTerraMm2)}
+              {alimentador.circuitosParalelos > 1
+                ? ` · ${alimentador.circuitosParalelos}× por fase (${mm2(alimentador.secaoFaseParaleloMm2)})`
+                : ''}
             </Text>
           </Card>
 

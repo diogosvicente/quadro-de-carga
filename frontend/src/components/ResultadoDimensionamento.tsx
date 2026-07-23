@@ -57,6 +57,14 @@ export function ResultadoDimensionamento({
     { rotulo: 'Seção por queda de tensão (comercial)', valor: mm2(r.secaoQuedaMm2) },
     { rotulo: 'Seção mínima normativa', valor: mm2(r.secaoMinimaMm2) },
     { rotulo: 'Seção final (máximo)', valor: mm2(r.secaoFinalMm2), forte: true },
+    ...(r.circuitosParalelos > 1
+      ? [
+          {
+            rotulo: `Seção por fase (${r.circuitosParalelos} em paralelo)`,
+            valor: mm2(r.secaoFaseParaleloMm2),
+          },
+        ]
+      : []),
     { rotulo: 'Condutor neutro', valor: mm2(r.secaoNeutroMm2) },
     { rotulo: 'Condutor terra (PE)', valor: mm2(r.secaoTerraMm2) },
     { rotulo: 'Rótulo do cabo', valor: r.rotuloCabo },
