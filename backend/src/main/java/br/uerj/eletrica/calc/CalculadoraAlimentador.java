@@ -4,7 +4,6 @@ import br.uerj.eletrica.calc.tabelas.TabelasNbr5410;
 import br.uerj.eletrica.domain.Isolante;
 
 import static br.uerj.eletrica.calc.CalculadoraCircuito.arredondar;
-import static br.uerj.eletrica.calc.CalculadoraCircuito.formatarSecao;
 
 /**
  * Dimensionamento do alimentador geral do quadro conforme NBR 5410.
@@ -26,6 +25,10 @@ public final class CalculadoraAlimentador {
     }
 
     public ResultadoAlimentador calcular(EntradaAlimentador in) {
+        // §6b P vias em paralelo por fase; cada via carrega In_geral/P e I_total/P
+        // (o disjuntor geral e a corrente total são do circuito inteiro).
+        int p = Math.max(1, in.circuitosParalelos());
+
         // §3.1 totais
         double cargaDemandadaVA = (in.somaPotenciaVA() + in.cargaReservaVA()) * in.fatorDemanda();
 
@@ -57,9 +60,12 @@ public final class CalculadoraAlimentador {
                         "Temperatura de " + in.temperaturaC() + " °C sem fator de correção (EPR). Temperaturas tabeladas: "
                                 + tabelas.temperaturasTabeladas(ISOLANTE_ALIMENTADOR, false) + "."));
         int condutoresCarregados = in.fases() == 3 ? 3 : 2;
-        double secaoPorCapacidade = Math.max(SECAO_MINIMA_ALIMENTADOR_MM2,
-                menorSecaoComIzCorrigida(in, condutoresCarregados, fTemp, inGeral));
 
+        // §6b capacidade por via: menor seção com Iz' ≥ In_geral/P (mínimo 2,5 mm²)
+        double secaoPorCapacidade = Math.max(SECAO_MINIMA_ALIMENTADOR_MM2,
+                menorSecaoComIzCorrigida(in, condutoresCarregados, fTemp, (double) inGeral / p));
+
+        // §3.4/§6b "um valor padrão acima do maior circuito" aplica-se à seção da VIA (não divide)
         Double secaoMinimaPorRegra = null;
         if (in.maiorSecaoCircuitoMm2() != null) {
             secaoMinimaPorRegra = tabelas.proximaSecaoAcima(ISOLANTE_ALIMENTADOR, in.maiorSecaoCircuitoMm2())
@@ -68,9 +74,10 @@ public final class CalculadoraAlimentador {
         }
         double secao = Math.max(secaoPorCapacidade, secaoMinimaPorRegra == null ? 0 : secaoMinimaPorRegra);
 
-        // §3.4 verificação iterativa de queda de tensão (limite do quadro, padrão 2%)
+        // §3.4/§6b verificação iterativa de queda (limite do quadro, padrão 2%) — a queda usa a
+        // seção equivalente das P vias em paralelo (P × secao), i.e. divide por P no denominador.
         double fatorFase = in.fases() == 3 ? RAIZ_3 : 2.0;
-        while (quedaPct(fatorFase, in.comprimentoM(), correnteTotalA, secao, tensaoV) > in.quedaAdmissivelPct()) {
+        while (quedaPct(fatorFase, in.comprimentoM(), correnteTotalA, p * secao, tensaoV) > in.quedaAdmissivelPct()) {
             var proxima = tabelas.proximaSecaoAcima(ISOLANTE_ALIMENTADOR, secao);
             if (proxima.isEmpty()) {
                 throw new CalculoException("Queda de tensão do alimentador acima de " + in.quedaAdmissivelPct()
@@ -78,15 +85,16 @@ public final class CalculadoraAlimentador {
             }
             secao = proxima.getAsDouble();
         }
-        final double secaoFinal = secao;
-        double quedaCalculadaPct = quedaPct(fatorFase, in.comprimentoM(), correnteTotalA, secaoFinal, tensaoV);
+        final double secaoFinal = secao; // seção de CADA via (vFase)
+        double quedaCalculadaPct = quedaPct(fatorFase, in.comprimentoM(), correnteTotalA, p * secaoFinal, tensaoV);
 
         double secaoNeutro = tabelas.neutroPara(secaoFinal)
                 .orElseThrow(() -> new CalculoException("Sem seção de neutro tabelada para " + secaoFinal + " mm²."));
         double secaoTerra = tabelas.terraPara(secaoFinal)
                 .orElseThrow(() -> new CalculoException("Sem seção de terra tabelada para " + secaoFinal + " mm²."));
-        String rotuloCabo = in.fases() + "F#" + formatarSecao(secaoFinal) + "mm²+N" + formatarSecao(secaoNeutro)
-                + "mm²+T" + formatarSecao(secaoTerra) + "mm²";
+
+        // §6b rótulo do cabo com P vias em paralelo (alimentador em EPR)
+        String rotulo = CabosParalelos.rotulo(in.fases(), p, secaoFinal, secaoNeutro, secaoTerra);
 
         // §3.5 capacidade do quadro (planilha BP2: 381 × In × 0,8 no sistema 127/220 trifásico)
         double capacidadeQuadroVA = (in.fases() == 3 ? RAIZ_3 * vff : tensaoV) * inGeral * 0.8;
@@ -101,15 +109,17 @@ public final class CalculadoraAlimentador {
                 disjuntorGeral,
                 inCalculado,
                 in.maiorDisjuntorCircuitoA(),
-                secao,
+                secaoFinal,
                 secaoPorCapacidade,
                 secaoMinimaPorRegra,
                 in.maiorSecaoCircuitoMm2(),
                 secaoNeutro,
                 secaoTerra,
-                rotuloCabo,
+                rotulo,
                 arredondar(quedaCalculadaPct, 2),
-                arredondar(capacidadeQuadroVA, 0));
+                arredondar(capacidadeQuadroVA, 0),
+                p,
+                secaoFinal);
     }
 
     private double menorSecaoComIzCorrigida(EntradaAlimentador in, int condutoresCarregados,

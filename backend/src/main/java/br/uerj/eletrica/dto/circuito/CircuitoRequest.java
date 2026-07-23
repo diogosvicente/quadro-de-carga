@@ -24,6 +24,7 @@ public record CircuitoRequest(
         @NotNull @Positive @DecimalMax("999999.99") BigDecimal comprimentoM,
         @NotNull @Min(1) Integer circuitosAgrupados,
         @NotNull Integer temperaturaC,
+        @Min(1) Integer circuitosParalelos,
         MetodoInstalacao metodoInstalacao,
         Isolante isolante,
         @Min(1) Integer formaAgrupamentoRef,
@@ -36,6 +37,7 @@ public record CircuitoRequest(
         return new CircuitoRequest(
                 numero, descricao, tipo, tensaoV, fases, potenciaW, fatorPotencia, comprimentoM,
                 circuitosAgrupados, temperaturaC,
+                circuitosParalelos != null ? circuitosParalelos : 1,
                 metodoInstalacao != null ? metodoInstalacao : MetodoInstalacao.B1,
                 isolante != null ? isolante : Isolante.PVC,
                 formaAgrupamentoRef != null ? formaAgrupamentoRef : 1,

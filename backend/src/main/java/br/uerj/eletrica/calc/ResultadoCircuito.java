@@ -17,7 +17,9 @@ public record ResultadoCircuito(
         double secaoNeutroMm2,
         double secaoTerraMm2,
         String rotuloCabo,
-        double quedaCalculadaPct) {
+        double quedaCalculadaPct,
+        int circuitosParalelos,
+        double secaoFaseParaleloMm2) {
 
     public record Disjuntor(int polos, int correnteA, String rotulo) {
     }

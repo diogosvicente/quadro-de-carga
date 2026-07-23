@@ -56,6 +56,9 @@ public class Circuito {
     @Column(name = "circuitos_agrupados", nullable = false)
     private Integer circuitosAgrupados = 1;
 
+    @Column(name = "circuitos_paralelos", nullable = false)
+    private Integer circuitosParalelos = 1;
+
     @Column(name = "temperatura_c", nullable = false)
     private Integer temperaturaC = 30;
 
@@ -111,6 +114,8 @@ public class Circuito {
     public void setComprimentoM(BigDecimal comprimentoM) { this.comprimentoM = comprimentoM; }
     public Integer getCircuitosAgrupados() { return circuitosAgrupados; }
     public void setCircuitosAgrupados(Integer circuitosAgrupados) { this.circuitosAgrupados = circuitosAgrupados; }
+    public Integer getCircuitosParalelos() { return circuitosParalelos; }
+    public void setCircuitosParalelos(Integer circuitosParalelos) { this.circuitosParalelos = circuitosParalelos; }
     public Integer getTemperaturaC() { return temperaturaC; }
     public void setTemperaturaC(Integer temperaturaC) { this.temperaturaC = temperaturaC; }
     public MetodoInstalacao getMetodoInstalacao() { return metodoInstalacao; }

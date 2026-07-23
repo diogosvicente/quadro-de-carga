@@ -20,5 +20,6 @@ public record EntradaAlimentador(
         double somaPotenciaW,
         double somaPotenciaVA,
         Integer maiorDisjuntorCircuitoA,
-        Double maiorSecaoCircuitoMm2) {
+        Double maiorSecaoCircuitoMm2,
+        int circuitosParalelos) {
 }

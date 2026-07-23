@@ -231,6 +231,57 @@ capacidadeQuadroVA = (√3 × Vff | Vff | Vfn, conforme F) × In_geral × 0.8   
 - Corrente corrigida acima do maior disjuntor/última seção das tabelas;
 - FP fora de (0,1]; potência/comprimento ≤ 0; número de circuito duplicado no quadro.
 
+## 6b. Condutores em paralelo — cada via carrega I/P (requisito Rodrigo, revisado 22/07/2026)
+
+Cada **circuito** e o **alimentador** têm o campo `circuitosParalelos` = **P** (inteiro ≥ 1, padrão 1):
+quantos cabos em paralelo passam por fase. **Decisão do Rodrigo (22/07): cada uma das P vias carrega
+`I/P` da corrente** — assim P vias menores dividem a carga e um circuito grande demais para um cabo só
+passa a ser dimensionável (antes dava "divida o circuito"). O **disjuntor protege o circuito inteiro**
+(In para a corrente total; **não** divide por P). P não altera correntes nem fatores.
+
+Dimensionamento de **cada via** (In = disjuntor do circuito inteiro; Ic = corrente corrigida; fatorFase = 2
+mono/bi, √3 tri; condutividade 58 circuitos / 56 alimentador):
+
+```
+condutoresCarregados = 3 se trifásico, senão 2
+vSobrecorrente = menor seção S com Iz(S,método,isolante,cond) × fTotal ≥ In / P     # coordenação por via
+vQueda         = menor seção comercial ≥ (fatorFase × L × Ic × 100) / (cond × e% × V × P)   # = seção de queda cheia ÷ P
+vMinima        = seção mínima Tab. 47 (por condutor — NÃO divide)
+vFase          = max(vSobrecorrente, vQueda, vMinima)          # seção de CADA via
+vNeutro        = neutro(vFase)   (Tab. 48)                     # neutro de cada via, a partir da fase da via
+vTerra         = terra(vFase)    (Tab. 58)                     # terra de cada via
+nCondutoresFase = P × pólos
+```
+
+**Rótulo do cabo** (circuitos e alimentador): `{P×pólos}F#{vFase}mm² + {P}N{vNeutro}mm² + {P}T{vTerra}mm²`.
+
+Para **P = 1** (padrão) reduz ao caso normal: `vFase` = seção final de §2.9/§3.4; rótulo
+`{pólos}F#{S_final}mm² + 1N{neutro}mm² + 1T{terra}mm²`.
+
+**Exemplos verificados** (PVC, circuito "Quadro de comando": Ic 38,5 A, In 40 A, fTotal 0,696, L 25 m, 220 V/1F):
+- P = 1 → `1F#16mm² + 1N16mm² + 1T16mm²` (vFase 16, como antes).
+- P = 2 → cada via carrega In/2 = 20 A: vSobre 4, vQueda 2,5, vMin 2,5 → **vFase 4** → `2F#4mm² + 2N4mm² + 2T4mm²`.
+
+Campos expostos: `secaoFinalMm2`/`secaoAlimentadorMm2` **= vFase (seção de cada via)**; `secaoFaseParaleloMm2` = vFase;
+`circuitosParalelos` = P. No alimentador, o disjuntor geral (regra dos 80% + "um passo acima do maior circuito",
+§3.3) e a corrente total são do circuito inteiro; a seção por via usa `In_geral/P` na capacidade e a queda por via,
+e a regra "um passo acima do maior circuito" (§3.4) aplica-se à seção da via.
+
+> Nota: cada via é um conjunto completo (fase + neutro + terra) dimensionado para I/P, com **um único
+> disjuntor** para o circuito inteiro. Substitui a regra anterior ("seção cheia ÷ P"), que não permitia
+> dividir circuitos grandes. Neutro/terra agora saem da seção da própria via — a validar com o Rodrigo
+> em casos reais.
+
+## 6c. Exportação do Quadro Elétrico (.xlsx e .dxf)
+
+`GET /api/quadros/{id}/export.xlsx` e `GET /api/quadros/{id}/export.dxf` geram a tabela do Quadro Elétrico:
+- **Linhas**: os circuitos em ordem de número e, por **último**, o **alimentador**.
+- **Colunas**: Nº do circuito · Descrição · Tensão (V) · Pólos (Monofásico/Bifásico/Trifásico) · Disjuntor · Seção dos cabos (rótulo de §6b).
+- Linha do alimentador: Nº = “Geral”; Descrição = “Alimentador geral”; demais colunas com os dados do alimentador.
+- `.xlsx`: Apache POI (cabeçalho em negrito, bordas). `.dxf`: DXF R12 ASCII (grade de `LINE` + `TEXT`), abre no
+  AutoCAD e pode ser salvo como `.dwg` (DWG nativo não é gerado no backend — ver decisão de 22/07/2026). No DXF,
+  “mm²” é escrito como “mm2” por compatibilidade de codepage.
+
 ## 7. Divergências conscientes em relação à planilha
 
 | # | Planilha | Sistema | Motivo |

@@ -19,6 +19,7 @@ public record QuadroRequest(
         @Size(max = 200) String local,
         @NotNull SistemaTensao sistemaTensao,
         @NotNull @Min(1) @Max(3) Integer fasesAlimentador,
+        @NotNull @Min(1) Integer circuitosParalelos,
         @NotNull @DecimalMin(value = "0", inclusive = false) @DecimalMax("1") BigDecimal fatorDemanda,
         @NotNull @PositiveOrZero @DecimalMax("9999999999.99") BigDecimal cargaReservaVA,
         @NotNull @Positive @DecimalMax("999999.99") BigDecimal comprimentoM,

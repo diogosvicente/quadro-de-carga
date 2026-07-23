@@ -104,7 +104,7 @@ public class QuadroService {
                     quadro.getFatorDemanda().doubleValue(), quadro.getCargaReservaVA().doubleValue(),
                     quadro.getComprimentoM().doubleValue(), quadro.getMetodoInstalacao(),
                     quadro.getQuedaAdmissivelPct().doubleValue(), quadro.getTemperaturaC(),
-                    somaW, somaVA, maiorDisjuntor, maiorSecao));
+                    somaW, somaVA, maiorDisjuntor, maiorSecao, quadro.getCircuitosParalelos()));
         }
         return new ResumoQuadroResponse(toResponse(quadro), alimentador, calculados);
     }
@@ -129,6 +129,7 @@ public class QuadroService {
         q.setLocal(req.local());
         q.setSistemaTensao(req.sistemaTensao());
         q.setFasesAlimentador(req.fasesAlimentador());
+        q.setCircuitosParalelos(req.circuitosParalelos());
         q.setFatorDemanda(req.fatorDemanda());
         q.setCargaReservaVA(req.cargaReservaVA());
         q.setComprimentoM(req.comprimentoM());

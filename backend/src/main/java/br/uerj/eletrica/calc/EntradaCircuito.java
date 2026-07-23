@@ -19,5 +19,6 @@ public record EntradaCircuito(
         int formaAgrupamentoRef,
         double fatorDemanda,
         double quedaAdmissivelPct,
-        boolean linhaSubterranea) {
+        boolean linhaSubterranea,
+        int circuitosParalelos) {
 }

@@ -19,5 +19,7 @@ public record ResultadoAlimentador(
         double secaoTerraMm2,
         String rotuloCabo,
         double quedaCalculadaPct,
-        double capacidadeQuadroVA) {
+        double capacidadeQuadroVA,
+        int circuitosParalelos,
+        double secaoFaseParaleloMm2) {
 }

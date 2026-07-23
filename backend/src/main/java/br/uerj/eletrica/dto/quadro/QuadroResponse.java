@@ -12,6 +12,7 @@ public record QuadroResponse(
         String local,
         SistemaTensao sistemaTensao,
         Integer fasesAlimentador,
+        Integer circuitosParalelos,
         BigDecimal fatorDemanda,
         BigDecimal cargaReservaVA,
         BigDecimal comprimentoM,
@@ -24,7 +25,8 @@ public record QuadroResponse(
     public static QuadroResponse de(Quadro q, long totalCircuitos, BigDecimal potenciaTotalW) {
         return new QuadroResponse(
                 q.getId(), q.getNome(), q.getLocal(), q.getSistemaTensao(), q.getFasesAlimentador(),
-                q.getFatorDemanda(), q.getCargaReservaVA(), q.getComprimentoM(), q.getMetodoInstalacao(),
+                q.getCircuitosParalelos(), q.getFatorDemanda(), q.getCargaReservaVA(), q.getComprimentoM(),
+                q.getMetodoInstalacao(),
                 q.getQuedaAdmissivelPct(), q.getTemperaturaC(), totalCircuitos, potenciaTotalW);
     }
 }

@@ -20,6 +20,7 @@ public record CircuitoResponse(
         BigDecimal fatorPotencia,
         BigDecimal comprimentoM,
         Integer circuitosAgrupados,
+        Integer circuitosParalelos,
         Integer temperaturaC,
         MetodoInstalacao metodoInstalacao,
         Isolante isolante,
@@ -33,7 +34,8 @@ public record CircuitoResponse(
         return new CircuitoResponse(
                 c.getId(), c.getQuadro().getId(), c.getNumero(), c.getDescricao(), c.getTipo(),
                 c.getTensaoV(), c.getFases(), c.getPotenciaW(), c.getFatorPotencia(), c.getComprimentoM(),
-                c.getCircuitosAgrupados(), c.getTemperaturaC(), c.getMetodoInstalacao(), c.getIsolante(),
+                c.getCircuitosAgrupados(), c.getCircuitosParalelos(), c.getTemperaturaC(),
+                c.getMetodoInstalacao(), c.getIsolante(),
                 c.getFormaAgrupamentoRef(), c.getFatorDemanda(), c.getQuedaAdmissivelPct(),
                 c.getLinhaSubterranea(), resultado);
     }

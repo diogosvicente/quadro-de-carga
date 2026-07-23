@@ -283,6 +283,8 @@ sempre o mesmo envelope: `{ "status": 422, "mensagem": "...", "erros": { "campo"
 | POST | `/api/quadros` | cria quadro |
 | GET/PUT/DELETE | `/api/quadros/{id}` | detalhe/edita/remove |
 | GET | `/api/quadros/{id}/resumo` | resumo: alimentador geral + circuitos calculados |
+| GET | `/api/quadros/{id}/export.xlsx` | planilha do Quadro Elétrico (Apache POI) — ver `docs/CALCULOS.md` §6c |
+| GET | `/api/quadros/{id}/export.dxf` | tabela do Quadro Elétrico em DXF R12 (abre no AutoCAD) — §6c |
 | GET/POST | `/api/quadros/{id}/circuitos` | lista/cria circuito |
 | GET/PUT/DELETE | `/api/quadros/{id}/circuitos/{cid}` | detalhe (com resultado)/edita/remove |
 | POST | `/api/calculos/circuito` | cálculo avulso sem persistir (preview do formulário) |

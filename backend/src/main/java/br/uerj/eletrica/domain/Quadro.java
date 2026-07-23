@@ -34,6 +34,9 @@ public class Quadro {
     @Column(name = "fases_alimentador", nullable = false)
     private Integer fasesAlimentador = 3;
 
+    @Column(name = "circuitos_paralelos", nullable = false)
+    private Integer circuitosParalelos = 1;
+
     @Column(name = "fator_demanda", nullable = false)
     private BigDecimal fatorDemanda = BigDecimal.ONE;
 
@@ -73,6 +76,8 @@ public class Quadro {
     public void setSistemaTensao(SistemaTensao sistemaTensao) { this.sistemaTensao = sistemaTensao; }
     public Integer getFasesAlimentador() { return fasesAlimentador; }
     public void setFasesAlimentador(Integer fasesAlimentador) { this.fasesAlimentador = fasesAlimentador; }
+    public Integer getCircuitosParalelos() { return circuitosParalelos; }
+    public void setCircuitosParalelos(Integer circuitosParalelos) { this.circuitosParalelos = circuitosParalelos; }
     public BigDecimal getFatorDemanda() { return fatorDemanda; }
     public void setFatorDemanda(BigDecimal fatorDemanda) { this.fatorDemanda = fatorDemanda; }
     public BigDecimal getCargaReservaVA() { return cargaReservaVA; }

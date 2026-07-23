@@ -90,7 +90,7 @@ public class CircuitoService {
                 req.comprimentoM().doubleValue(), req.circuitosAgrupados(), req.temperaturaC(),
                 req.metodoInstalacao(), req.isolante(), req.formaAgrupamentoRef(),
                 req.fatorDemanda().doubleValue(), req.quedaAdmissivelPct().doubleValue(),
-                req.linhaSubterranea()));
+                req.linhaSubterranea(), req.circuitosParalelos()));
     }
 
     public ResultadoCircuito calcular(Circuito c) {
@@ -100,7 +100,7 @@ public class CircuitoService {
                 c.getComprimentoM().doubleValue(), c.getCircuitosAgrupados(), c.getTemperaturaC(),
                 c.getMetodoInstalacao(), c.getIsolante(), c.getFormaAgrupamentoRef(),
                 c.getFatorDemanda().doubleValue(), c.getQuedaAdmissivelPct().doubleValue(),
-                c.getLinhaSubterranea()));
+                c.getLinhaSubterranea(), c.getCircuitosParalelos()));
     }
 
     private CircuitoRequest validar(CircuitoRequest request) {
@@ -122,6 +122,7 @@ public class CircuitoService {
         c.setFatorPotencia(req.fatorPotencia());
         c.setComprimentoM(req.comprimentoM());
         c.setCircuitosAgrupados(req.circuitosAgrupados());
+        c.setCircuitosParalelos(req.circuitosParalelos());
         c.setTemperaturaC(req.temperaturaC());
         c.setMetodoInstalacao(req.metodoInstalacao());
         c.setIsolante(req.isolante());
