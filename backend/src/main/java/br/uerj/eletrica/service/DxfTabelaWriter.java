@@ -10,20 +10,35 @@ import java.util.Locale;
  *
  * <p>A tabela é desenhada como uma grade: entidades {@code LINE} (linhas horizontais e verticais)
  * mais uma entidade {@code TEXT} por célula, alinhada à esquerda com pequena margem. A origem fica
- * no canto superior esquerdo e o eixo Y decresce por linha (primeira linha no topo). Estrutura mínima:
- * SECTION HEADER (vazia) + SECTION ENTITIES + ENDSEC + EOF — abre em visualizadores DXF comuns
- * (AutoCAD, LibreCAD, etc.).
+ * no canto superior esquerdo e o eixo Y decresce por linha (primeira linha no topo).
  *
- * <p>Compatibilidade de codepage: "mm²" é escrito como "mm2" e caracteres fora de Latin-1 são
- * substituídos (§6c).
+ * <p>Estrutura: SECTION HEADER (com $ACADVER e extensões do desenho, para o "zoom extents" abrir
+ * enquadrado) + SECTION TABLES (LTYPE/LAYER/STYLE) + SECTION ENTITIES + EOF. Definir o STYLE
+ * explicitamente evita que o CAD substitua a fonte por uma proporcional mais larga, o que
+ * desconfigurava a tabela (texto invadindo a célula vizinha).
+ *
+ * <p>Compatibilidade de codepage: texto convertido para ASCII 7 bits ("mm²" vira "mm2").
  */
 final class DxfTabelaWriter {
 
-    private static final double ALTURA_LINHA = 8.0;   // altura de cada linha da tabela (unidades de desenho)
     private static final double ALTURA_TEXTO = 2.5;   // altura do texto
-    private static final double MARGEM = 1.5;         // recuo do texto dentro da célula
-    private static final double LARGURA_CHAR = 1.8;   // largura estimada por caractere (para dimensionar colunas)
-    private static final double LARGURA_MIN_COLUNA = 12.0;
+    private static final double ALTURA_LINHA = 8.0;   // altura de cada linha da tabela
+    private static final double MARGEM = 2.0;         // recuo do texto dentro da célula
+
+    /**
+     * Fator de largura do texto (grupo 41 do TEXT e do STYLE): 1.0 = fonte sem compressão.
+     * Mantido em 1.0 para que a largura renderizada case com a estimativa abaixo.
+     */
+    private static final double FATOR_LARGURA_TEXTO = 1.0;
+
+    /**
+     * Avanço horizontal estimado por caractere, como fração da altura do texto. Medido na
+     * renderização real do AutoCAD (~0,86 × altura para a fonte txt); usa-se 0,95 para dar folga
+     * e cobrir substituição de fonte. Subestimar isto faz o texto transbordar da célula.
+     */
+    private static final double AVANCO_CHAR = 0.95;
+    private static final double LARGURA_CHAR = ALTURA_TEXTO * AVANCO_CHAR;
+    private static final double LARGURA_MIN_COLUNA = 14.0;
 
     private DxfTabelaWriter() {
     }
@@ -31,7 +46,7 @@ final class DxfTabelaWriter {
     /**
      * @param cabecalhos títulos das colunas
      * @param linhas     linhas de dados (cada uma com {@code cabecalhos.length} células)
-     * @return bytes do arquivo DXF (Latin-1)
+     * @return bytes do arquivo DXF (ASCII)
      */
     static byte[] gerar(String[] cabecalhos, List<String[]> linhas) {
         int nColunas = cabecalhos.length;
@@ -46,10 +61,9 @@ final class DxfTabelaWriter {
         double alturaTotal = nLinhas * ALTURA_LINHA;
 
         StringBuilder sb = new StringBuilder();
-        // SECTION HEADER (vazia)
-        par(sb, 0, "SECTION");
-        par(sb, 2, "HEADER");
-        par(sb, 0, "ENDSEC");
+        cabecalhoDxf(sb, larguraTotal, alturaTotal);
+        tabelasDxf(sb);
+
         // SECTION ENTITIES
         par(sb, 0, "SECTION");
         par(sb, 2, "ENTITIES");
@@ -78,7 +92,69 @@ final class DxfTabelaWriter {
 
         par(sb, 0, "ENDSEC");
         par(sb, 0, "EOF");
-        return sb.toString().getBytes(StandardCharsets.ISO_8859_1);
+        return sb.toString().getBytes(StandardCharsets.US_ASCII);
+    }
+
+    /** HEADER com versão e extensões do desenho (para abrir enquadrado no CAD). */
+    private static void cabecalhoDxf(StringBuilder sb, double larguraTotal, double alturaTotal) {
+        par(sb, 0, "SECTION");
+        par(sb, 2, "HEADER");
+        par(sb, 9, "$ACADVER");
+        par(sb, 1, "AC1009");
+        par(sb, 9, "$EXTMIN");
+        par(sb, 10, 0.0);
+        par(sb, 20, -alturaTotal);
+        par(sb, 30, 0.0);
+        par(sb, 9, "$EXTMAX");
+        par(sb, 10, larguraTotal);
+        par(sb, 20, 0.0);
+        par(sb, 30, 0.0);
+        par(sb, 0, "ENDSEC");
+    }
+
+    /** TABLES mínimas (LTYPE, LAYER e STYLE) — o STYLE fixa a fonte e o fator de largura. */
+    private static void tabelasDxf(StringBuilder sb) {
+        par(sb, 0, "SECTION");
+        par(sb, 2, "TABLES");
+
+        par(sb, 0, "TABLE");
+        par(sb, 2, "LTYPE");
+        par(sb, 70, 1);
+        par(sb, 0, "LTYPE");
+        par(sb, 2, "CONTINUOUS");
+        par(sb, 70, 0);
+        par(sb, 3, "Solid line");
+        par(sb, 72, 65);
+        par(sb, 73, 0);
+        par(sb, 40, 0.0);
+        par(sb, 0, "ENDTAB");
+
+        par(sb, 0, "TABLE");
+        par(sb, 2, "LAYER");
+        par(sb, 70, 1);
+        par(sb, 0, "LAYER");
+        par(sb, 2, "0");
+        par(sb, 70, 0);
+        par(sb, 62, 7);
+        par(sb, 6, "CONTINUOUS");
+        par(sb, 0, "ENDTAB");
+
+        par(sb, 0, "TABLE");
+        par(sb, 2, "STYLE");
+        par(sb, 70, 1);
+        par(sb, 0, "STYLE");
+        par(sb, 2, "STANDARD");
+        par(sb, 70, 0);
+        par(sb, 40, 0.0);                      // altura fixa 0 = definida por entidade
+        par(sb, 41, FATOR_LARGURA_TEXTO);      // fator de largura
+        par(sb, 50, 0.0);                      // ângulo de inclinação
+        par(sb, 71, 0);
+        par(sb, 42, ALTURA_TEXTO);             // última altura usada
+        par(sb, 3, "txt");                     // fonte monoespaçada padrão do CAD
+        par(sb, 4, "");
+        par(sb, 0, "ENDTAB");
+
+        par(sb, 0, "ENDSEC");
     }
 
     private static double[] larguraColunas(String[] cabecalhos, List<String[]> linhas, int nColunas) {
@@ -114,9 +190,15 @@ final class DxfTabelaWriter {
         par(sb, 30, 0.0);
         par(sb, 40, ALTURA_TEXTO);
         par(sb, 1, sanitizar(conteudo));
+        par(sb, 41, FATOR_LARGURA_TEXTO);
+        par(sb, 7, "STANDARD");
     }
 
     private static void par(StringBuilder sb, int codigo, String valor) {
+        sb.append(codigo).append('\n').append(valor).append('\n');
+    }
+
+    private static void par(StringBuilder sb, int codigo, int valor) {
         sb.append(codigo).append('\n').append(valor).append('\n');
     }
 
