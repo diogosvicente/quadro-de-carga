@@ -55,6 +55,15 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     if (ehEnvelopeErro(corpo)) {
       throw new ApiError(corpo.status, corpo.mensagem, corpo.erros);
     }
+    // 502/503/504 sem envelope = servidor reiniciando ou fora do ar (o nginx já costuma
+    // devolver o envelope, mas em dev o proxy do Vite não devolve).
+    if (resposta.status >= 502 && resposta.status <= 504) {
+      throw new ApiError(
+        resposta.status,
+        'O servidor está reiniciando ou indisponível. Aguarde alguns segundos e tente novamente.',
+        null,
+      );
+    }
     throw new ApiError(resposta.status, `Erro ${resposta.status} ao chamar a API.`, null);
   }
 
