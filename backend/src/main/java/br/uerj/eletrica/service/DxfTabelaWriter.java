@@ -1,7 +1,7 @@
 package br.uerj.eletrica.service;
 
-import java.nio.charset.StandardCharsets;
-import java.text.Normalizer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.util.List;
 import java.util.Locale;
 
@@ -17,7 +17,9 @@ import java.util.Locale;
  * explicitamente evita que o CAD substitua a fonte por uma proporcional mais larga, o que
  * desconfigurava a tabela (texto invadindo a célula vizinha).
  *
- * <p>Compatibilidade de codepage: texto convertido para ASCII 7 bits ("mm²" vira "mm2").
+ * <p>Acentuação e "mm²": o arquivo declara {@code $DWGCODEPAGE = ANSI_1252} e é gravado em
+ * Windows-1252, e o STYLE usa uma fonte TrueType (Arial), que tem os glifos de "²" e dos acentos.
+ * Caracteres fora da Windows-1252 são transliterados para ASCII.
  */
 final class DxfTabelaWriter {
 
@@ -39,6 +41,12 @@ final class DxfTabelaWriter {
     private static final double AVANCO_CHAR = 0.95;
     private static final double LARGURA_CHAR = ALTURA_TEXTO * AVANCO_CHAR;
     private static final double LARGURA_MIN_COLUNA = 14.0;
+
+    /** Codepage declarada no arquivo e usada na gravação — cobre acentos e "²". */
+    private static final Charset CODEPAGE = Charset.forName("windows-1252");
+
+    /** Fonte TrueType: tem "²" e acentos (a SHX padrão do CAD não tem). */
+    private static final String FONTE = "arial.ttf";
 
     private DxfTabelaWriter() {
     }
@@ -92,7 +100,7 @@ final class DxfTabelaWriter {
 
         par(sb, 0, "ENDSEC");
         par(sb, 0, "EOF");
-        return sb.toString().getBytes(StandardCharsets.US_ASCII);
+        return sb.toString().getBytes(CODEPAGE);
     }
 
     /** HEADER com versão e extensões do desenho (para abrir enquadrado no CAD). */
@@ -101,6 +109,8 @@ final class DxfTabelaWriter {
         par(sb, 2, "HEADER");
         par(sb, 9, "$ACADVER");
         par(sb, 1, "AC1009");
+        par(sb, 9, "$DWGCODEPAGE");
+        par(sb, 3, "ANSI_1252");
         par(sb, 9, "$EXTMIN");
         par(sb, 10, 0.0);
         par(sb, 20, -alturaTotal);
@@ -150,7 +160,7 @@ final class DxfTabelaWriter {
         par(sb, 50, 0.0);                      // ângulo de inclinação
         par(sb, 71, 0);
         par(sb, 42, ALTURA_TEXTO);             // última altura usada
-        par(sb, 3, "txt");                     // fonte monoespaçada padrão do CAD
+        par(sb, 3, FONTE);                     // TrueType: tem "²" e acentos
         par(sb, 4, "");
         par(sb, 0, "ENDTAB");
 
@@ -207,20 +217,32 @@ final class DxfTabelaWriter {
     }
 
     /**
-     * Transforma o texto em ASCII 7 bits para máxima compatibilidade do DXF R12 (evita mojibake de
-     * acentos em Latin-1): NFKD decompõe acentos e formas de compatibilidade (ç→c, ã→a, ²→2, º→o),
-     * removem-se os diacríticos e qualquer resíduo não-ASCII vira '?'.
+     * Mantém o texto como está quando os caracteres existem na Windows-1252 — o caso de "mm²",
+     * "Descrição", "Tensão", "Pólos" e "Seção" — já que o arquivo declara essa codepage e usa
+     * fonte TrueType. Só o que estiver fora dela cai para um equivalente ASCII (ex.: travessão
+     * "—" vira "-"), evitando byte inválido no arquivo.
      */
     private static String sanitizar(String s) {
         if (s == null) {
             return "";
         }
-        String semAcento = Normalizer.normalize(s, Normalizer.Form.NFKD).replaceAll("\\p{M}+", "");
-        StringBuilder out = new StringBuilder(semAcento.length());
-        for (int i = 0; i < semAcento.length(); i++) {
-            char c = semAcento.charAt(i);
-            out.append(c <= 0x7E ? c : '?');
+        CharsetEncoder encoder = CODEPAGE.newEncoder();
+        StringBuilder out = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            out.append(encoder.canEncode(c) ? String.valueOf(c) : substitutoAscii(c));
         }
         return out.toString();
+    }
+
+    private static String substitutoAscii(char c) {
+        return switch (c) {
+            case '—', '–', '‑' -> "-";
+            case '“', '”' -> "\"";
+            case '‘', '’' -> "'";
+            case '…' -> "...";
+            case '³' -> "3";
+            default -> "?";
+        };
     }
 }

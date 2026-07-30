@@ -280,7 +280,9 @@ e a regra "um passo acima do maior circuito" (§3.4) aplica-se à seção da via
 - Linha do alimentador: Nº = “Geral”; Descrição = “Alimentador geral”; demais colunas com os dados do alimentador.
 - `.xlsx`: Apache POI (cabeçalho em negrito, bordas). `.dxf`: DXF R12 ASCII (grade de `LINE` + `TEXT`), abre no
   AutoCAD e pode ser salvo como `.dwg` (DWG nativo não é gerado no backend — ver decisão de 22/07/2026). No DXF,
-  “mm²” é escrito como “mm2” por compatibilidade de codepage.
+  o arquivo declara `$DWGCODEPAGE = ANSI_1252`, é gravado em Windows-1252 e o STYLE usa fonte
+  TrueType (Arial), de modo que “mm²” e os acentos (“Descrição”, “Tensão”, “Seção”, “Pólos”)
+  aparecem corretamente; caracteres fora dessa codepage são transliterados para ASCII.
 
 ## 7. Divergências conscientes em relação à planilha
 

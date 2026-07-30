@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -28,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Smoke test da exportação (docs/CALCULOS.md §6c): QuadroService.resumo é stubado, então o teste
  * roda sem banco. Verifica que o XLSX é um OOXML (ZIP, começa com "PK") e que o DXF tem estrutura
- * mínima (SECTION/EOF) com a linha do alimentador e "mm²" escrito como "mm2".
+ * mínima (SECTION/EOF) com a linha do alimentador, "mm²" e acentos (Windows-1252).
  */
 class ExportServiceTest {
 
@@ -72,12 +73,33 @@ class ExportServiceTest {
 
     @Test
     void dxf_geraTabelaR12ComAlimentador() {
-        String dxf = new String(comResumo(resumoExemplo()).dxf(10L), StandardCharsets.ISO_8859_1);
+        String dxf = new String(comResumo(resumoExemplo()).dxf(10L), Charset.forName("windows-1252"));
         assertTrue(dxf.contains("SECTION"), "DXF deve conter SECTION");
         assertTrue(dxf.contains("EOF"), "DXF deve terminar com EOF");
         assertTrue(dxf.contains("Alimentador geral"), "DXF deve conter a linha do alimentador");
-        // §6c: "mm²" é escrito como "mm2" no DXF por compatibilidade de codepage
-        assertTrue(dxf.contains("mm2"), "seções no DXF usam 'mm2'");
-        assertFalse(dxf.contains("mm²"), "DXF não deve conter o caractere '²'");
+    }
+
+    @Test
+    void dxf_usaMm2ComExpoenteEAcentos() {
+        byte[] bytes = comResumo(resumoExemplo()).dxf(10L);
+        String dxf = new String(bytes, Charset.forName("windows-1252"));
+        // §6c: codepage declarada + gravação em Windows-1252 permitem "mm²" e acentos de verdade
+        assertTrue(dxf.contains("$DWGCODEPAGE"), "DXF deve declarar a codepage");
+        assertTrue(dxf.contains("ANSI_1252"), "codepage deve ser ANSI_1252");
+        assertTrue(dxf.contains("mm²"), "seções no DXF devem usar 'mm²'");
+        assertFalse(dxf.contains("mm2"), "não deve sobrar o antigo 'mm2' sem expoente");
+        assertTrue(dxf.contains("Descrição"), "cabeçalhos devem manter os acentos");
+        assertTrue(dxf.contains("Seção dos cabos"), "cabeçalhos devem manter os acentos");
+        // '²' é 0xB2 na Windows-1252 (garante que não virou UTF-8 de 2 bytes)
+        assertTrue(contemByte(bytes, (byte) 0xB2), "'²' deve estar gravado como byte 0xB2");
+    }
+
+    private static boolean contemByte(byte[] bytes, byte alvo) {
+        for (byte b : bytes) {
+            if (b == alvo) {
+                return true;
+            }
+        }
+        return false;
     }
 }
