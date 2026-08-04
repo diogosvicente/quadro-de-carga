@@ -4,14 +4,18 @@ import br.uerj.eletrica.calc.CalculadoraCircuito;
 import br.uerj.eletrica.calc.EntradaCircuito;
 import br.uerj.eletrica.calc.ResultadoCircuito;
 import br.uerj.eletrica.domain.Circuito;
+import br.uerj.eletrica.domain.Equipamento;
 import br.uerj.eletrica.domain.Quadro;
 import br.uerj.eletrica.dto.circuito.CircuitoRequest;
 import br.uerj.eletrica.dto.circuito.CircuitoResponse;
+import br.uerj.eletrica.dto.circuito.EquipamentoRequest;
 import br.uerj.eletrica.repository.CircuitoRepository;
 import br.uerj.eletrica.repository.QuadroRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Set;
 
@@ -109,7 +113,57 @@ public class CircuitoService {
             throw new RegraDeNegocioException("Tensão inválida: " + req.tensaoV()
                     + " V. Valores aceitos: 127, 220, 380, 440 ou 660 V.");
         }
-        return req;
+        return derivarPotencia(req);
+    }
+
+    /**
+     * Ponto único da regra de docs/CALCULOS.md §1.1b (criar/atualizar/prévia): sem equipamentos,
+     * exige a potência total digitada (comportamento antigo); com equipamentos, valida a lista e
+     * devolve o request efetivo com {@code potenciaW} substituída pela derivada
+     * (Σ P×qtd, ou V × ΣI×qtd × FP — com √3 no trifásico), arredondada a 2 casas.
+     * Visibilidade de pacote para o teste de unidade.
+     */
+    CircuitoRequest derivarPotencia(CircuitoRequest req) {
+        List<EquipamentoRequest> lista = req.equipamentos();
+        if (lista == null || lista.isEmpty()) {
+            if (req.potenciaW() == null) {
+                throw new RegraDeNegocioException(
+                        "Informe a potência total (ou a corrente) do circuito, ou detalhe os equipamentos.");
+            }
+            return req;
+        }
+        boolean haPotencia = false;
+        boolean haCorrente = false;
+        for (EquipamentoRequest e : lista) {
+            boolean porPotencia = e.potenciaW() != null;
+            if (porPotencia == (e.correnteA() != null)) {
+                throw new RegraDeNegocioException("Cada equipamento deve ter potência OU corrente.");
+            }
+            haPotencia |= porPotencia;
+            haCorrente |= !porPotencia;
+        }
+        if (haPotencia && haCorrente) {
+            throw new RegraDeNegocioException(
+                    "Não misture equipamentos por potência e por corrente no mesmo circuito.");
+        }
+        BigDecimal total;
+        if (haPotencia) {
+            // SOMARPRODUTO da planilha: Σ (potência unitária × quantidade)
+            total = lista.stream()
+                    .map(e -> e.potenciaW().multiply(BigDecimal.valueOf(e.quantidade())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        } else {
+            BigDecimal correnteTotalA = lista.stream()
+                    .map(e -> e.correnteA().multiply(BigDecimal.valueOf(e.quantidade())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            total = BigDecimal.valueOf(req.tensaoV())
+                    .multiply(correnteTotalA)
+                    .multiply(req.fatorPotencia());
+            if (req.fases() == 3) {
+                total = total.multiply(BigDecimal.valueOf(Math.sqrt(3)));
+            }
+        }
+        return req.comPotenciaW(total.setScale(2, RoundingMode.HALF_UP));
     }
 
     private void aplicar(CircuitoRequest req, Circuito c) {
@@ -130,6 +184,17 @@ public class CircuitoService {
         c.setFatorDemanda(req.fatorDemanda());
         c.setQuedaAdmissivelPct(req.quedaAdmissivelPct());
         c.setLinhaSubterranea(req.linhaSubterranea());
+        c.limparEquipamentos();
+        if (req.equipamentos() != null) {
+            for (EquipamentoRequest er : req.equipamentos()) {
+                Equipamento e = new Equipamento();
+                e.setNome(er.nome());
+                e.setQuantidade(er.quantidade());
+                e.setPotenciaW(er.potenciaW());
+                e.setCorrenteA(er.correnteA());
+                c.adicionarEquipamento(e); // back-reference + ordem = posição no request
+            }
+        }
     }
 
     private Quadro exigirQuadro(Long quadroId) {

@@ -34,6 +34,40 @@
 | `quedaAdmissivelPct` | decimal | não | 4.0 | NBR 5410: circuitos terminais |
 | `linhaSubterranea` | bool | não | false | muda a tabela de correção de temperatura (solo × ambiente) |
 
+### 1.1b Equipamentos do circuito (opcional — requisito Rodrigo, 12/08/2026)
+
+Em vez de digitar a potência (ou corrente) total do circuito, o usuário pode **detalhar os
+equipamentos** — replicando o `SOMARPRODUTO(B5:AO5; B$4:AO$4)` da planilha (quantidades × valores
+unitários), com a melhoria de dar **nome** a cada tipo de equipamento.
+
+Cada circuito tem uma lista opcional `equipamentos[]` (0 a 50 itens). Cada item:
+
+| Campo | Tipo | Obrigatório | Observações |
+|---|---|---|---|
+| `nome` | texto ≤ 120 | não | ex.: "Lâmpada LED", "Tomada de uso geral" |
+| `quantidade` | int ≥ 1 | sim | nº de unidades daquele tipo |
+| `potenciaW` | decimal > 0 | um dos dois | potência unitária (modo potência) |
+| `correnteA` | decimal > 0 | um dos dois | corrente unitária (modo corrente) |
+
+Regras (o **backend** é a fonte da verdade da derivação, no criar/atualizar e na prévia):
+
+```
+lista por POTÊNCIA (todas as linhas com potenciaW):
+    P_total = Σ (potenciaW_i × quantidade_i)                    # SOMARPRODUTO da planilha
+lista por CORRENTE (todas as linhas com correnteA):
+    I_total = Σ (correnteA_i × quantidade_i)
+    fases 1 ou 2:  P_total = V × I_total × FP
+    fases 3:       P_total = √3 × V × I_total × FP
+```
+
+- `potenciaW` do circuito passa a ser **derivada** (arredondada a 2 casas) e persistida como total —
+  todo o cálculo de §2 em diante segue **inalterado** sobre esse total.
+- Lista vazia/ausente → comportamento antigo (o total é digitado; `potenciaW` obrigatória).
+- Erro 422: linhas com unidades misturadas (W e A na mesma lista); linha com os dois valores ou
+  nenhum; lista ausente **e** `potenciaW` ausente.
+- Os equipamentos são persistidos com o circuito (tabela `equipamento`, remove-se em cascata) e
+  devolvidos no `CircuitoResponse.equipamentos` na ordem cadastrada.
+
 ### 1.2 Quadro (alimentador geral)
 
 | Campo | Padrão | Observações |

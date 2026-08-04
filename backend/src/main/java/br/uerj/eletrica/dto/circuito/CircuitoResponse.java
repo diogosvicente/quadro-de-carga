@@ -7,6 +7,7 @@ import br.uerj.eletrica.domain.MetodoInstalacao;
 import br.uerj.eletrica.domain.TipoCircuito;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record CircuitoResponse(
         Long id,
@@ -28,15 +29,20 @@ public record CircuitoResponse(
         BigDecimal fatorDemanda,
         BigDecimal quedaAdmissivelPct,
         Boolean linhaSubterranea,
+        List<EquipamentoResponse> equipamentos,
         ResultadoCircuito resultado) {
 
     public static CircuitoResponse de(Circuito c, ResultadoCircuito resultado) {
+        // nunca null: lista vazia quando o total foi digitado direto (docs/CALCULOS.md §1.1b)
+        List<EquipamentoResponse> equipamentos = c.getEquipamentos().stream()
+                .map(EquipamentoResponse::de)
+                .toList();
         return new CircuitoResponse(
                 c.getId(), c.getQuadro().getId(), c.getNumero(), c.getDescricao(), c.getTipo(),
                 c.getTensaoV(), c.getFases(), c.getPotenciaW(), c.getFatorPotencia(), c.getComprimentoM(),
                 c.getCircuitosAgrupados(), c.getCircuitosParalelos(), c.getTemperaturaC(),
                 c.getMetodoInstalacao(), c.getIsolante(),
                 c.getFormaAgrupamentoRef(), c.getFatorDemanda(), c.getQuedaAdmissivelPct(),
-                c.getLinhaSubterranea(), resultado);
+                c.getLinhaSubterranea(), equipamentos, resultado);
     }
 }

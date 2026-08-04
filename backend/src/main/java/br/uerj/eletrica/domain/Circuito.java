@@ -1,5 +1,6 @@
 package br.uerj.eletrica.domain;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,11 +11,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "circuito")
@@ -82,6 +87,11 @@ public class Circuito {
     @Column(name = "linha_subterranea", nullable = false)
     private Boolean linhaSubterranea = Boolean.FALSE;
 
+    /** Lista opcional de equipamentos que deriva a potência total (docs/CALCULOS.md §1.1b). */
+    @OneToMany(mappedBy = "circuito", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("ordem")
+    private List<Equipamento> equipamentos = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private OffsetDateTime createdAt;
 
@@ -130,6 +140,18 @@ public class Circuito {
     public void setQuedaAdmissivelPct(BigDecimal quedaAdmissivelPct) { this.quedaAdmissivelPct = quedaAdmissivelPct; }
     public Boolean getLinhaSubterranea() { return linhaSubterranea; }
     public void setLinhaSubterranea(Boolean linhaSubterranea) { this.linhaSubterranea = linhaSubterranea; }
+    public List<Equipamento> getEquipamentos() { return equipamentos; }
+
+    public void limparEquipamentos() {
+        equipamentos.clear();
+    }
+
+    /** Adiciona ao fim da lista, ajustando a back-reference e a ordem de exibição. */
+    public void adicionarEquipamento(Equipamento equipamento) {
+        equipamento.setCircuito(this);
+        equipamento.setOrdem(equipamentos.size());
+        equipamentos.add(equipamento);
+    }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
 }

@@ -43,7 +43,7 @@ class ExportServiceTest {
                 1L, 10L, 2, "Freezers", TipoCircuito.FORCA, 220, 1,
                 BigDecimal.valueOf(1419), BigDecimal.valueOf(0.92), BigDecimal.valueOf(19),
                 1, 1, 30, MetodoInstalacao.B1, Isolante.PVC, 1,
-                BigDecimal.ONE, BigDecimal.valueOf(4), false, rc);
+                BigDecimal.ONE, BigDecimal.valueOf(4), false, List.of(), rc);
 
         ResultadoAlimentador alimentador = new CalculadoraAlimentador(tabelas).calcular(new EntradaAlimentador(
                 SistemaTensao.V127_220, 3, 1.0, 0, 20, MetodoInstalacao.B1, 2.0, 30,
