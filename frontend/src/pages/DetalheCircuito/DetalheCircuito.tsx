@@ -9,6 +9,7 @@ import {
   Group,
   Loader,
   Stack,
+  Table,
   Text,
   Title,
 } from '@mantine/core';
@@ -99,6 +100,7 @@ export function DetalheCircuito() {
   }
 
   const c = circuito;
+  const equipamentos = c.equipamentos ?? [];
   const rotuloTipo = referencias.tiposCircuito.find((t) => t.codigo === c.tipo)?.rotulo ?? c.tipo;
   const rotuloFases =
     referencias.fases.find((f) => f.valor === c.fases)?.rotulo ?? `${c.fases} fases`;
@@ -189,6 +191,50 @@ export function DetalheCircuito() {
         </Title>
         <ListaDefinicao itens={entradas} />
       </Card>
+
+      {equipamentos.length > 0 ? (
+        <Card>
+          <Title order={2} fz="h4" mb="md">
+            Equipamentos
+          </Title>
+          <Table.ScrollContainer minWidth={480}>
+            <Table striped verticalSpacing="xs" horizontalSpacing="md">
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Nome</Table.Th>
+                  <Table.Th ta="right">Valor unitário</Table.Th>
+                  <Table.Th ta="right">Qtd</Table.Th>
+                  <Table.Th ta="right">Subtotal</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {equipamentos.map((e, i) => {
+                  const unitario = e.correnteA ?? e.potenciaW ?? 0;
+                  const unidade = e.correnteA !== null ? 'A' : 'W';
+                  return (
+                    <Table.Tr key={e.id}>
+                      <Table.Td>{e.nome ?? `Equipamento ${i + 1}`}</Table.Td>
+                      <Table.Td ta="right">{`${num(unitario, 2)} ${unidade}`}</Table.Td>
+                      <Table.Td ta="right">{num(e.quantidade, 0)}</Table.Td>
+                      <Table.Td ta="right">{`${num(unitario * e.quantidade, 2)} ${unidade}`}</Table.Td>
+                    </Table.Tr>
+                  );
+                })}
+              </Table.Tbody>
+              <Table.Tfoot>
+                <Table.Tr>
+                  <Table.Td colSpan={3} fw={600}>
+                    Total do circuito
+                  </Table.Td>
+                  <Table.Td ta="right" fw={600}>
+                    {watts(c.potenciaW)}
+                  </Table.Td>
+                </Table.Tr>
+              </Table.Tfoot>
+            </Table>
+          </Table.ScrollContainer>
+        </Card>
+      ) : null}
     </Stack>
   );
 }

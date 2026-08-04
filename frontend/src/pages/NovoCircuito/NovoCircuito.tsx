@@ -3,10 +3,12 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Accordion,
+  ActionIcon,
   Alert,
   Button,
   Center,
   Fieldset,
+  Grid,
   Group,
   Loader,
   NumberInput,
@@ -20,7 +22,7 @@ import {
   Title,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconArrowLeft, IconAlertTriangle } from '@tabler/icons-react';
+import { IconArrowLeft, IconAlertTriangle, IconPlus, IconTrash } from '@tabler/icons-react';
 import { ApiError } from '../../api/client';
 import {
   atualizarCircuito,
@@ -30,10 +32,31 @@ import {
 } from '../../api/circuitos';
 import { obterReferencias } from '../../api/referencias';
 import { ResultadoDimensionamento } from '../../components/ResultadoDimensionamento';
-import type { CircuitoRequest, CircuitoResponse, ResultadoCircuito } from '../../types/circuito';
+import type {
+  CircuitoRequest,
+  CircuitoResponse,
+  EquipamentoRequest,
+  ResultadoCircuito,
+} from '../../types/circuito';
 import type { Isolante, MetodoInstalacao, TipoCircuito } from '../../types/comum';
 import type { ReferenciasResponse } from '../../types/referencias';
 import { num, watts } from '../../utils/formato';
+
+/** Linha da lista de equipamentos: `valor` é a potência (W) ou corrente (A) unitária, conforme o modo. */
+interface LinhaEquipamento {
+  id: number;
+  nome: string;
+  valor: string;
+  quantidade: string;
+}
+
+const MAX_EQUIPAMENTOS = 50;
+
+let proximoIdLinha = 1;
+
+function novaLinha(): LinhaEquipamento {
+  return { id: proximoIdLinha++, nome: '', valor: '', quantidade: '1' };
+}
 
 interface FormCircuito {
   numero: string;
@@ -44,6 +67,8 @@ interface FormCircuito {
   potenciaW: string;
   modoEntrada: 'potencia' | 'corrente';
   correnteA: string;
+  detalharEquipamentos: boolean;
+  equipamentos: LinhaEquipamento[];
   fatorPotencia: string;
   comprimentoM: string;
   circuitosAgrupados: string;
@@ -67,6 +92,8 @@ const FORM_PADRAO: FormCircuito = {
   potenciaW: '',
   modoEntrada: 'potencia',
   correnteA: '',
+  detalharEquipamentos: false,
+  equipamentos: [],
   fatorPotencia: '0.92',
   comprimentoM: '',
   circuitosAgrupados: '1',
@@ -91,6 +118,8 @@ const CAMPOS_AVANCADOS = [
 ];
 
 function deResposta(c: CircuitoResponse): FormCircuito {
+  const equipamentos = c.equipamentos ?? [];
+  const detalhado = equipamentos.length > 0;
   return {
     numero: String(c.numero),
     descricao: c.descricao ?? '',
@@ -98,8 +127,15 @@ function deResposta(c: CircuitoResponse): FormCircuito {
     tensaoV: String(c.tensaoV),
     fases: String(c.fases),
     potenciaW: String(c.potenciaW),
-    modoEntrada: 'potencia',
+    modoEntrada: detalhado && equipamentos[0].correnteA !== null ? 'corrente' : 'potencia',
     correnteA: '',
+    detalharEquipamentos: detalhado,
+    equipamentos: equipamentos.map((e) => ({
+      id: proximoIdLinha++,
+      nome: e.nome ?? '',
+      valor: String(e.correnteA ?? e.potenciaW ?? ''),
+      quantidade: String(e.quantidade),
+    })),
     fatorPotencia: String(c.fatorPotencia),
     comprimentoM: String(c.comprimentoM),
     circuitosAgrupados: String(c.circuitosAgrupados),
@@ -187,18 +223,83 @@ export function NovoCircuito() {
     setForm((atual) => ({ ...atual, [campo]: valor }) as FormCircuito);
   };
 
+  const alternarDetalhamento = (ligado: boolean) => {
+    setForm((atual) => ({
+      ...atual,
+      detalharEquipamentos: ligado,
+      // ao ligar pela primeira vez, começa com 1 linha vazia; ao religar, preserva as linhas
+      equipamentos: ligado && atual.equipamentos.length === 0 ? [novaLinha()] : atual.equipamentos,
+    }));
+    setErros({});
+    setMensagem(null);
+  };
+
+  const adicionarEquipamento = () => {
+    setForm((atual) =>
+      atual.equipamentos.length >= MAX_EQUIPAMENTOS
+        ? atual
+        : { ...atual, equipamentos: [...atual.equipamentos, novaLinha()] },
+    );
+  };
+
+  const removerEquipamento = (id: number) => {
+    setForm((atual) => ({
+      ...atual,
+      equipamentos: atual.equipamentos.filter((linha) => linha.id !== id),
+    }));
+  };
+
+  const alterarEquipamento = (
+    id: number,
+    campo: 'nome' | 'valor' | 'quantidade',
+    valor: string,
+  ) => {
+    setForm((atual) => ({
+      ...atual,
+      equipamentos: atual.equipamentos.map((linha) =>
+        linha.id === id ? { ...linha, [campo]: valor } : linha,
+      ),
+    }));
+  };
+
   const montar = (): CircuitoRequest | null => {
     const locais: Record<string, string> = {};
     const numero = paraNumero(form.numero);
     if (form.numero.trim() === '' || !Number.isInteger(numero) || numero <= 0) {
       locais.numero = 'Informe um número inteiro maior que zero.';
     }
-    let potenciaW: number;
-    if (form.modoEntrada === 'corrente') {
+    let potenciaW: number | undefined;
+    let equipamentos: EquipamentoRequest[] | undefined;
+    let listaVazia = false;
+    if (form.detalharEquipamentos) {
+      // Detalhamento ligado: o total é derivado pelo backend — potenciaW do circuito é omitida.
+      if (form.equipamentos.length === 0) {
+        listaVazia = true;
+      } else {
+        equipamentos = form.equipamentos.map((linha) => {
+          const valor = paraNumero(linha.valor);
+          if (linha.valor.trim() === '' || Number.isNaN(valor) || valor <= 0) {
+            locais[`eq-${linha.id}-valor`] =
+              form.modoEntrada === 'corrente'
+                ? 'Informe a corrente unitária em ampères (maior que zero).'
+                : 'Informe a potência unitária em watts (maior que zero).';
+          }
+          const quantidade = paraNumero(linha.quantidade);
+          if (!Number.isInteger(quantidade) || quantidade < 1) {
+            locais[`eq-${linha.id}-quantidade`] = 'Informe um inteiro maior ou igual a 1.';
+          }
+          const nome = linha.nome.trim();
+          return {
+            nome: nome === '' ? undefined : nome,
+            quantidade,
+            ...(form.modoEntrada === 'corrente' ? { correnteA: valor } : { potenciaW: valor }),
+          };
+        });
+      }
+    } else if (form.modoEntrada === 'corrente') {
       const correnteA = paraNumero(form.correnteA);
       if (form.correnteA.trim() === '' || Number.isNaN(correnteA) || correnteA <= 0) {
         locais.correnteA = 'Informe a corrente em ampères (maior que zero).';
-        potenciaW = Number.NaN;
       } else {
         potenciaW = potenciaDeCorrente(
           paraNumero(form.tensaoV),
@@ -208,9 +309,11 @@ export function NovoCircuito() {
         );
       }
     } else {
-      potenciaW = paraNumero(form.potenciaW);
-      if (form.potenciaW.trim() === '' || Number.isNaN(potenciaW) || potenciaW <= 0) {
+      const potenciaTotal = paraNumero(form.potenciaW);
+      if (form.potenciaW.trim() === '' || Number.isNaN(potenciaTotal) || potenciaTotal <= 0) {
         locais.potenciaW = 'Informe a potência em watts (maior que zero).';
+      } else {
+        potenciaW = potenciaTotal;
       }
     }
     const comprimentoM = paraNumero(form.comprimentoM);
@@ -241,9 +344,17 @@ export function NovoCircuito() {
     if (!Number.isInteger(circuitosParalelos) || circuitosParalelos < 1) {
       locais.circuitosParalelos = 'Informe um inteiro maior ou igual a 1.';
     }
-    if (Object.keys(locais).length > 0) {
+    if (listaVazia || Object.keys(locais).length > 0) {
       setErros(locais);
-      setMensagem('Corrija os campos destacados.');
+      const chaves = Object.keys(locais);
+      const soEquipamentos = chaves.length > 0 && chaves.every((chave) => chave.startsWith('eq-'));
+      setMensagem(
+        listaVazia
+          ? 'Adicione ao menos um equipamento ou desligue o detalhamento.'
+          : soEquipamentos
+            ? 'Corrija os equipamentos destacados.'
+            : 'Corrija os campos destacados.',
+      );
       return null;
     }
     setErros({});
@@ -256,6 +367,7 @@ export function NovoCircuito() {
       tensaoV: paraNumero(form.tensaoV) as CircuitoRequest['tensaoV'],
       fases: paraNumero(form.fases) as CircuitoRequest['fases'],
       potenciaW,
+      equipamentos,
       fatorPotencia,
       comprimentoM,
       circuitosAgrupados,
@@ -365,6 +477,32 @@ export function NovoCircuito() {
         )
       : null;
 
+  // Total do detalhamento de equipamentos: Σ valor×qtd das linhas válidas, na unidade do modo.
+  const totalDetalhado = form.equipamentos.reduce((soma, linha) => {
+    const valor = paraNumero(linha.valor);
+    const quantidade = paraNumero(linha.quantidade);
+    return Number.isFinite(valor) && valor > 0 && Number.isFinite(quantidade) && quantidade > 0
+      ? soma + valor * quantidade
+      : soma;
+  }, 0);
+  const potenciaTotalDetalhada =
+    form.modoEntrada === 'corrente' && Number.isFinite(fatorPotenciaAtual)
+      ? potenciaDeCorrente(
+          paraNumero(form.tensaoV),
+          totalDetalhado,
+          fatorPotenciaAtual,
+          paraNumero(form.fases),
+        )
+      : null;
+  const rotuloTotalDetalhado =
+    form.modoEntrada === 'corrente'
+      ? `Total: ${num(totalDetalhado, 2)} A${
+          potenciaTotalDetalhada !== null && Number.isFinite(potenciaTotalDetalhada)
+            ? ` ≈ ${watts(potenciaTotalDetalhada)}`
+            : ''
+        }`
+      : `Total: ${num(totalDetalhado, 2)} W`;
+
   return (
     <Stack gap="md">
       <Button
@@ -443,6 +581,101 @@ export function NovoCircuito() {
                 ]}
                 onChange={(v) => alterar('modoEntrada', v as FormCircuito['modoEntrada'])}
               />
+              <Switch
+                label="Detalhar equipamentos do circuito"
+                checked={form.detalharEquipamentos}
+                onChange={(e) => alternarDetalhamento(e.currentTarget.checked)}
+              />
+              {form.detalharEquipamentos ? (
+                <Stack gap="sm">
+                  {form.equipamentos.map((linha, i) => {
+                    const valorLinha = paraNumero(linha.valor);
+                    const quantidadeLinha = paraNumero(linha.quantidade);
+                    const subtotal =
+                      Number.isFinite(valorLinha) &&
+                      valorLinha > 0 &&
+                      Number.isFinite(quantidadeLinha) &&
+                      quantidadeLinha > 0
+                        ? valorLinha * quantidadeLinha
+                        : null;
+                    const unidade = form.modoEntrada === 'corrente' ? 'A' : 'W';
+                    return (
+                      <Grid key={linha.id} gutter="xs" align="flex-end">
+                        <Grid.Col span={{ base: 12, sm: 4 }}>
+                          <TextInput
+                            label="Nome"
+                            value={linha.nome}
+                            placeholder="Ex: Lâmpada LED"
+                            maxLength={120}
+                            onChange={(e) =>
+                              alterarEquipamento(linha.id, 'nome', e.currentTarget.value)
+                            }
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={{ base: 6, sm: 3 }}>
+                          <NumberInput
+                            label={
+                              form.modoEntrada === 'corrente'
+                                ? 'Corrente unitária (A)'
+                                : 'Potência unitária (W)'
+                            }
+                            required
+                            value={linha.valor}
+                            error={erros[`eq-${linha.id}-valor`]}
+                            suffix={form.modoEntrada === 'corrente' ? ' A' : ' W'}
+                            min={0}
+                            step={form.modoEntrada === 'corrente' ? 0.1 : 1}
+                            allowNegative={false}
+                            onChange={(v) => alterarEquipamento(linha.id, 'valor', String(v))}
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={{ base: 6, sm: 2 }}>
+                          <NumberInput
+                            label="Quantidade"
+                            required
+                            value={linha.quantidade}
+                            error={erros[`eq-${linha.id}-quantidade`]}
+                            min={1}
+                            step={1}
+                            allowDecimal={false}
+                            allowNegative={false}
+                            onChange={(v) => alterarEquipamento(linha.id, 'quantidade', String(v))}
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={{ base: 12, sm: 3 }}>
+                          <Group justify="space-between" wrap="nowrap" gap="xs">
+                            <Text size="sm" c="dimmed">
+                              {subtotal !== null
+                                ? `Subtotal: ${num(subtotal, 2)} ${unidade}`
+                                : 'Subtotal: —'}
+                            </Text>
+                            <ActionIcon
+                              variant="subtle"
+                              color="red"
+                              size="lg"
+                              aria-label={`Remover equipamento ${i + 1}`}
+                              onClick={() => removerEquipamento(linha.id)}
+                            >
+                              <IconTrash size={16} />
+                            </ActionIcon>
+                          </Group>
+                        </Grid.Col>
+                      </Grid>
+                    );
+                  })}
+                  <Group justify="space-between" wrap="wrap" gap="sm">
+                    <Button
+                      variant="light"
+                      leftSection={<IconPlus size={16} />}
+                      onClick={adicionarEquipamento}
+                      disabled={form.equipamentos.length >= MAX_EQUIPAMENTOS}
+                    >
+                      Adicionar equipamento
+                    </Button>
+                    <Text fw={600}>{rotuloTotalDetalhado}</Text>
+                  </Group>
+                </Stack>
+              ) : null}
               <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
                 <Select
                   label="Tensão (V)"
@@ -466,7 +699,7 @@ export function NovoCircuito() {
                     if (v) alterar('fases', v);
                   }}
                 />
-                {form.modoEntrada === 'corrente' ? (
+                {form.detalharEquipamentos ? null : form.modoEntrada === 'corrente' ? (
                   <NumberInput
                     label="Corrente (A)"
                     required
