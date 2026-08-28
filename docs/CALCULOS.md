@@ -29,7 +29,7 @@
 | `temperaturaC` | int | sim | 30 | temperatura ambiente |
 | `metodoInstalacao` | enum A1, A2, B1, B2, C, D, E, F, G | não | B1 | avançado; B1 = eletroduto embutido em alvenaria |
 | `isolante` | enum `PVC` \| `EPR` | não | PVC | PVC 70 °C / EPR-XLPE 90 °C |
-| `formaAgrupamento` | ref. 1–5 da tabela `agrupamento.json` | não | ref. 1 (em feixe / conduto fechado) | avançado |
+| `formaAgrupamentoRef` | ref. 1–5 da tabela `agrupamento.json` | não | ref. 1 (em feixe / conduto fechado) | avançado |
 | `fatorDemanda` | decimal (0,1] | não | 1.0 | por circuito |
 | `quedaAdmissivelPct` | decimal | não | 4.0 | NBR 5410: circuitos terminais |
 | `linhaSubterranea` | bool | não | false | muda a tabela de correção de temperatura (solo × ambiente) |
@@ -108,7 +108,7 @@ Conferência (Glide): 1419 W, FP 0,92, 220 V, 1F → S = 1542 VA, Ip = 7,0 A ✓
 ### 2.3 Fatores de correção
 
 ```
-fAgrup = agrupamento.json[formaAgrupamento][circuitosAgrupados]     # NBR 5410 Tab. 42
+fAgrup = agrupamento.json[formaAgrupamentoRef][circuitosAgrupados]     # NBR 5410 Tab. 42
 fTemp  = temperatura.json[ambiente|solo][temperaturaC][isolante]    # NBR 5410 Tab. 40
 fTotal = fAgrup × fTemp
 ```
