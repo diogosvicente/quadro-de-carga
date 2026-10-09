@@ -3,6 +3,9 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci || npm install
 COPY . .
+# Prefixo de implantação atrás de proxy (ex.: /quadro-de-carga/); '/' = raiz.
+ARG VITE_BASE_PATH=/
+ENV VITE_BASE_PATH=$VITE_BASE_PATH
 RUN npm run build
 
 FROM nginx:1.29.8-alpine

@@ -28,11 +28,19 @@ function ehEnvelopeErro(corpo: unknown): corpo is ErroApi {
   );
 }
 
+/** Prefixo de implantação (ex.: '/quadro-de-carga'); vazio quando o app roda na raiz. */
+const PREFIXO = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+/** URL real de um caminho da API ('/api/...'), respeitando o prefixo de implantação. */
+export function apiUrl(path: string): string {
+  return `${PREFIXO}${path}`;
+}
+
 /** Único ponto do app que conhece fetch, baseURL e o envelope de erro. */
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   let resposta: Response;
   try {
-    resposta = await fetch(path, {
+    resposta = await fetch(apiUrl(path), {
       ...init,
       headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
     });

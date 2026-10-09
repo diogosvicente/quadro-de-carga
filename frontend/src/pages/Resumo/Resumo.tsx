@@ -22,6 +22,7 @@ import {
   IconSettings,
 } from '@tabler/icons-react';
 import type { ContextoQuadro } from '../../App';
+import { apiUrl } from '../../api/client';
 import { buscarResumoQuadro } from '../../api/quadros';
 import { obterReferencias } from '../../api/referencias';
 import { QuadroForm } from '../../components/QuadroForm';
@@ -95,7 +96,7 @@ export function Resumo() {
             <>
               <Button
                 component="a"
-                href={`/api/quadros/${quadroId}/export.xlsx`}
+                href={apiUrl(`/api/quadros/${quadroId}/export.xlsx`)}
                 download
                 variant="light"
                 leftSection={<IconFileSpreadsheet size={16} />}
@@ -104,7 +105,7 @@ export function Resumo() {
               </Button>
               <Button
                 component="a"
-                href={`/api/quadros/${quadroId}/export.dxf`}
+                href={apiUrl(`/api/quadros/${quadroId}/export.dxf`)}
                 download
                 variant="light"
                 leftSection={<IconFileExport size={16} />}
