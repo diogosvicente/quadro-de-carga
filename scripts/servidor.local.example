@@ -1,0 +1,9 @@
+# Modelo da config LOCAL do servidor de deploy.
+# Copie para scripts/servidor.local (ignorado pelo git e pelo rsync) e ajuste.
+# Lido por scripts/deploy.sh e scripts/backup-pull.sh; variáveis de ambiente têm prioridade.
+
+REMOTE_HOST=usuario@host-do-servidor
+
+# Opcionais (caminhos relativos = a partir da home do usuário no servidor):
+#REMOTE_DIR=quadro-de-carga
+#REMOTE_BACKUP_DIR=quadro-de-carga-backups

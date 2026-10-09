@@ -98,6 +98,12 @@ dados de demonstração — aceitável para demo com dados descartáveis. **Não
 o app é isolado (contêineres próprios + só o próprio Postgres), sem SSRF/pivô. Higiene: derrubar o túnel
 fora da demo. Se um dia virar ferramenta interna real → adicionar login e apertar CORS (ver §7).
 
+### Deploy em servidor
+O app também está publicado num servidor Docker da UERJ, em `/quadro-de-carga/`, no mesmo padrão do GSTI
+(`/gsti/`): Docker Compose + proxy Caddy do GSTI na porta 80, uma subpasta por sistema. Deploy:
+`./scripts/deploy.sh` (rsync + build no servidor; o host fica em `scripts/servidor.local`, fora do git).
+Arquitetura, rota do Caddy, operação, backup e limitações em **[`docs/DEPLOY.md`](DEPLOY.md)**.
+
 ## 7. Fix recente — 403 ao editar/cadastrar pelo túnel (CORS)
 
 **Sintoma**: pelo túnel, carregar/ver funcionava, mas **salvar/cadastrar/excluir dava 403**.

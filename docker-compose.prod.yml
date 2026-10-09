@@ -1,0 +1,65 @@
+# Produção — servidor com o proxy Caddy do GSTI, em http://<servidor>/quadro-de-carga/
+# Usado por scripts/deploy.sh:  docker compose -f docker-compose.prod.yml up -d --build
+#
+# A porta 80 do servidor pertence ao proxy Caddy do GSTI (compose do GSTI). Este compose não
+# publica porta nenhuma: só o contêiner `web` entra na rede do GSTI (gsti_default) para o
+# Caddy alcançá-lo em quadro-de-carga-web:80. `db` e `api` ficam isolados na rede interna.
+# Detalhes e rota do Caddy: docs/DEPLOY.md.
+name: quadro-de-carga
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: quadro-de-carga-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: eletrica
+      POSTGRES_USER: eletrica
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eletrica -d eletrica"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+      # O servidor só tem DNS IPv6, que a rede bridge do build não alcança (mesmo caso do GSTI):
+      # sem isso o Maven não resolve repo.maven.apache.org.
+      network: host
+    image: quadro-de-carga-api:latest
+    container_name: quadro-de-carga-api
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/eletrica
+      SPRING_DATASOURCE_USERNAME: eletrica
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      network: host
+      args:
+        # Tem de bater com a rota do Caddy (handle_path /quadro-de-carga/*).
+        VITE_BASE_PATH: /quadro-de-carga/
+    image: quadro-de-carga-web:latest
+    container_name: quadro-de-carga-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      - default
+      - gsti_default
+
+networks:
+  gsti_default:
+    external: true
+
+volumes:
+  pgdata:

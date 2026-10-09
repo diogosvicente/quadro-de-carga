@@ -15,3 +15,6 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# Segredos locais (o modelo versionado é .env.example)
+.env

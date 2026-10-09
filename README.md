@@ -37,6 +37,7 @@ cd frontend && npm install && npm run dev
 | [ARCHITECTURE.md](ARCHITECTURE.md) | camadas, padrões de código, checklist de feature |
 | [docs/CALCULOS.md](docs/CALCULOS.md) | especificação das fórmulas (fonte da verdade do motor de cálculo) |
 | [docs/dados-normativos/](docs/dados-normativos/) | tabelas da NBR 5410 extraídas da planilha (JSON verificado) |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | publicação em servidor Docker atrás do proxy Caddy do GSTI (`scripts/deploy.sh`, backup, rota no Caddy) |
 
 > ⚠️ As tabelas extraídas corrigem erros de digitação encontrados na planilha original
 > (capacidades B2 35 mm², D 70 mm², B1 630 mm² e quatro linhas da tabela de terra) — as correções
